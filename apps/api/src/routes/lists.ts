@@ -234,6 +234,75 @@ listsRouter.get("/:id/contacts", async (req, res) => {
   });
 });
 
+listsRouter.get("/:id/contacts.csv", async (req, res) => {
+  const listId = String(req.params.id);
+
+  const list = await prisma.contactList.findFirst({
+    where: { id: listId, orgId: req.user!.orgId }
+  });
+
+  if (!list) {
+    return res.status(404).json({ message: "List not found" });
+  }
+
+  const members = await prisma.contactListMember.findMany({
+    where: {
+      listId: list.id,
+      contact: { orgId: req.user!.orgId }
+    },
+    include: { contact: true },
+    orderBy: { subscribedAt: "desc" }
+  });
+
+  const headers = [
+    "contact_id",
+    "email",
+    "first_name",
+    "last_name",
+    "phone",
+    "status",
+    "source",
+    "custom_fields",
+    "subscribed_at",
+    "created_at",
+    "updated_at"
+  ];
+
+  const escapeCsv = (value: unknown) => {
+    const text = value == null
+      ? ""
+      : typeof value === "object"
+      ? JSON.stringify(value)
+      : String(value);
+    return `"${text.replace(/"/g, "\"\"")}"`;
+  };
+
+  const lines = [headers.join(",")];
+  for (const member of members) {
+    const contact = member.contact;
+    lines.push(
+      [
+        contact.id,
+        contact.email,
+        contact.firstName,
+        contact.lastName,
+        contact.phone,
+        contact.status,
+        contact.source,
+        contact.customFields,
+        member.subscribedAt.toISOString(),
+        contact.createdAt.toISOString(),
+        contact.updatedAt.toISOString()
+      ].map(escapeCsv).join(",")
+    );
+  }
+
+  const filename = `${list.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "contacts"}.csv`;
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  return res.send(lines.join("\n"));
+});
+
 listsRouter.post("/:id/contacts/bulk", writeAccess, async (req, res) => {
   const listId = String(req.params.id);
 

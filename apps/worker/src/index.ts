@@ -168,6 +168,8 @@ async function processQueueMessage(message: {
         eventType: "SENT"
       }
     });
+
+    await markCampaignSentIfComplete(body.campaignId);
   }
 
   return { shouldDelete: true as const };
@@ -184,6 +186,29 @@ async function markFailedFromMessage(message: { Body?: string }) {
   } catch {
     // ignore parse/update errors while dead-lettering
   }
+}
+
+async function markCampaignSentIfComplete(campaignId?: string) {
+  if (!campaignId) return;
+
+  const remainingQueued = await prisma.campaignSend.count({
+    where: {
+      campaignId,
+      status: "QUEUED"
+    }
+  });
+
+  if (remainingQueued > 0) return;
+
+  await prisma.campaign.updateMany({
+    where: {
+      id: campaignId,
+      status: CampaignStatus.SENDING
+    },
+    data: {
+      status: CampaignStatus.SENT
+    }
+  });
 }
 
 async function processScheduledCampaigns() {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { apiFetch } from "../lib/api";
+import { API_BASE, apiFetch, getAccessToken } from "../lib/api";
 
 type Role = "SUPER_ADMIN" | "CAMPAIGN_MANAGER" | "VIEWER";
 type ContactStatus = "ACTIVE" | "UNSUBSCRIBED" | "BOUNCED" | "COMPLAINED";
@@ -97,11 +97,44 @@ export function ContactListDetailPage(props: {
     }
   }
 
+  async function exportContactsCsv() {
+    if (!props.listId) return;
+
+    try {
+      const response = await fetch(`${API_BASE}/api/lists/${props.listId}/contacts.csv`, {
+        headers: {
+          Authorization: `Bearer ${getAccessToken() ?? ""}`
+        }
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data?.message ?? "Failed to export contacts");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${list?.name ?? "contacts"}.csv`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      setStatus("Contact CSV exported");
+    } catch (error) {
+      setStatus((error as Error).message);
+    }
+  }
+
   return (
     <section className="panel" style={{ display: "grid", gap: 12 }}>
       <div className="panel-header">
         <h2>Contact List Detail</h2>
-        <button onClick={props.onBack}>Back</button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button onClick={() => void exportContactsCsv()} disabled={!props.listId}>Export CSV</button>
+          <button onClick={props.onBack}>Back</button>
+        </div>
       </div>
       {status ? <p className="success">{status}</p> : null}
       {list ? (

@@ -1,0 +1,537 @@
+openapi: 3.0.3
+info:
+  title: Email Campaign Platform API
+  version: 1.0.0
+  description: API surface for admin workflows, campaign sending, tracking, unsubscribe, and SES event handling.
+servers:
+  - url: https://email-campaign-platform.onrender.com
+    description: Production API
+  - url: http://localhost:4000
+    description: Local API
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    CampaignAudience:
+      type: object
+      properties:
+        listIds:
+          type: array
+          items:
+            type: string
+        segmentId:
+          type: string
+          nullable: true
+        excludeListIds:
+          type: array
+          items:
+            type: string
+paths:
+  /health:
+    get:
+      security: []
+      summary: API health check
+      responses:
+        "200":
+          description: Service is healthy
+  /api/auth/login:
+    post:
+      security: []
+      summary: Login and return access/refresh tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Logged in
+        "401":
+          description: Invalid credentials
+  /api/auth/logout:
+    post:
+      summary: Revoke the current session
+      responses:
+        "200":
+          description: Logged out
+  /api/auth/me:
+    get:
+      summary: Return the authenticated user
+      responses:
+        "200":
+          description: Current user
+  /api/lists:
+    get:
+      summary: List contact lists
+      responses:
+        "200":
+          description: Contact lists
+    post:
+      summary: Create a contact list
+      responses:
+        "201":
+          description: Created
+  /api/lists/{id}:
+    get:
+      summary: Get one list with stats
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List detail
+    put:
+      summary: Update a contact list
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Updated
+    delete:
+      summary: Delete a contact list
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+  /api/lists/{id}/contacts:
+    get:
+      summary: Get contacts in a list
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paginated contacts
+  /api/lists/{id}/contacts.csv:
+    get:
+      summary: Export contacts in a list as CSV
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: CSV export
+  /api/lists/{id}/import:
+    post:
+      summary: Preview or commit a CSV contact import
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Preview rows or import result
+  /api/contacts:
+    post:
+      summary: Create a contact
+      responses:
+        "201":
+          description: Created
+  /api/contacts/{id}:
+    get:
+      summary: Get contact profile and event history
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Contact detail
+    put:
+      summary: Update a contact
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Updated
+    delete:
+      summary: Delete a contact
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+  /api/segments:
+    get:
+      summary: List segments
+      responses:
+        "200":
+          description: Segments
+    post:
+      summary: Create segment rules
+      responses:
+        "201":
+          description: Created
+  /api/segments/{id}/count:
+    get:
+      summary: Count matching segment contacts
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Count
+  /api/templates:
+    get:
+      summary: List templates
+      responses:
+        "200":
+          description: Templates
+    post:
+      summary: Create a template
+      responses:
+        "201":
+          description: Created
+  /api/templates/upload-asset:
+    post:
+      summary: Upload a template asset to S3
+      responses:
+        "201":
+          description: Uploaded
+  /api/templates/{id}:
+    get:
+      summary: Get one template
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Template
+    put:
+      summary: Update a template
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Updated
+    delete:
+      summary: Delete a template
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+  /api/templates/{id}/duplicate:
+    post:
+      summary: Duplicate a template
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Duplicated
+  /api/campaigns:
+    get:
+      summary: List campaigns
+      responses:
+        "200":
+          description: Campaigns
+    post:
+      summary: Create a draft campaign
+      responses:
+        "201":
+          description: Created
+  /api/campaigns/{id}:
+    get:
+      summary: Get campaign detail
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Campaign
+    put:
+      summary: Update a draft campaign
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Updated
+    delete:
+      summary: Delete a draft campaign
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+  /api/campaigns/{id}/send:
+    post:
+      summary: Queue campaign for immediate sending
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignAudience"
+      responses:
+        "200":
+          description: Queued
+  /api/campaigns/{id}/schedule:
+    post:
+      summary: Schedule a campaign
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Scheduled
+  /api/campaigns/{id}/pause:
+    post:
+      summary: Pause a sending campaign
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paused
+  /api/campaigns/{id}/resume:
+    post:
+      summary: Resume a paused campaign
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resumed
+  /api/campaigns/{id}/cancel:
+    post:
+      summary: Cancel a scheduled campaign
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cancelled
+  /api/campaigns/{id}/test:
+    post:
+      summary: Send a campaign test to up to five addresses
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Test send queued
+  /api/campaigns/{id}/progress:
+    get:
+      summary: Get live send progress
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Progress
+  /api/campaigns/{id}/report:
+    get:
+      summary: Get campaign analytics report
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Report
+  /api/campaigns/{id}/report.csv:
+    get:
+      summary: Export campaign report as CSV
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: CSV export
+  /api/analytics/dashboard:
+    get:
+      summary: Dashboard metrics and recent activity
+      responses:
+        "200":
+          description: Dashboard
+  /api/settings/suppression:
+    get:
+      summary: List suppressed emails
+      responses:
+        "200":
+          description: Suppression list
+    post:
+      summary: Add a suppressed email manually
+      responses:
+        "201":
+          description: Added
+  /api/settings/org:
+    get:
+      summary: Get organisation settings
+      responses:
+        "200":
+          description: Organisation
+    put:
+      summary: Update organisation settings
+      responses:
+        "200":
+          description: Updated
+  /api/users:
+    get:
+      summary: List admin users
+      responses:
+        "200":
+          description: Users
+    post:
+      summary: Invite or create an admin user
+      responses:
+        "201":
+          description: Created
+  /track/open:
+    get:
+      security: []
+      summary: Record an open and return a 1x1 PNG
+      responses:
+        "200":
+          description: Tracking pixel
+  /track/click:
+    get:
+      security: []
+      summary: Record a click and redirect to the original URL
+      responses:
+        "302":
+          description: Redirect
+  /unsubscribe:
+    get:
+      security: []
+      summary: Show unsubscribe page
+      responses:
+        "200":
+          description: Unsubscribe page
+    post:
+      security: []
+      summary: Process one-click unsubscribe or resubscribe
+      responses:
+        "200":
+          description: Updated
+  /preferences:
+    get:
+      security: []
+      summary: Show preference centre
+      responses:
+        "200":
+          description: Preferences page
+    post:
+      security: []
+      summary: Update list preferences
+      responses:
+        "200":
+          description: Updated
+  /webhooks/ses:
+    post:
+      security: []
+      summary: Receive SES/SNS delivery, bounce, complaint, open, and click events
+      responses:
+        "200":
+          description: Event processed

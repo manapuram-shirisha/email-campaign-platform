@@ -39,6 +39,34 @@ scripts/     Smoke and frontend tests
 docs/        Deployment and readiness documentation
 ```
 
+## Architecture
+
+```mermaid
+flowchart LR
+  Admin[Admin Browser] --> Web[Vercel React/Vite Web]
+  Web --> API[Render Express API]
+  API --> DB[(Render PostgreSQL)]
+  API --> S3[AWS S3 Template Assets]
+  API --> SQS[AWS SQS Send Queue]
+  Worker[Railway Background Worker] --> SQS
+  Worker --> SES[AWS SES]
+  Worker --> DB
+  SES --> Recipient[Subscriber Inbox]
+  Recipient --> Tracking[Open, Click, Unsubscribe Links]
+  Tracking --> API
+  SES --> SNS[AWS SNS Events]
+  SNS --> API
+  API --> DB
+```
+
+Production deployment used for the live demo:
+
+- Web: Vercel, `apps/web`
+- API: Render Web Service, `apps/api`
+- Worker: Railway background service, `apps/worker`
+- Database: Render PostgreSQL
+- Email/queue/storage: AWS SES, SQS, and S3
+
 ## Prerequisites
 
 - Node.js 22+
@@ -150,13 +178,17 @@ pnpm test:frontend
 
 The smoke test expects the API to be running. The frontend test expects both API and web to be running.
 
+## API Docs
+
+OpenAPI documentation is available at [docs/openapi.yaml](docs/openapi.yaml). It covers authenticated admin APIs, campaign sending/reporting routes, public tracking routes, unsubscribe/preference routes, and the SES webhook.
+
 ## Deployment
 
 Recommended deployment:
 
 - Vercel: `apps/web`
 - Render Web Service: `apps/api`
-- Render Background Worker: `apps/worker`
+- Railway or Render Background Worker: `apps/worker`
 - Render PostgreSQL, Neon, Supabase, or another managed PostgreSQL provider
 
 PostgreSQL is deployed separately. The API and worker connect to it through `DATABASE_URL`.
