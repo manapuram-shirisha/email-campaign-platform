@@ -1,0 +1,531 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>AWS Base Module Documentation</title>
+    <style>
+      @page { size: A4; margin: 18mm 16mm; }
+      :root {
+        --navy: #172033;
+        --blue: #1f5eff;
+        --teal: #009b8f;
+        --amber: #d88700;
+        --rose: #c2415a;
+        --green: #16835f;
+        --ink: #222836;
+        --line: #d8dee9;
+        --panel: #f5f7fb;
+        --code: #111827;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); font-family: "Segoe UI", Arial, sans-serif; font-size: 10.5pt; line-height: 1.5; background: #fff; }
+      .cover { padding: 34px 38px; color: white; background: linear-gradient(135deg, var(--navy), #6b3b00); border-radius: 12px; margin-bottom: 28px; }
+      .eyebrow { margin: 0 0 16px; color: #ffd99b; font-size: 9pt; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; }
+      h1 { margin: 0 0 12px; font-family: Georgia, "Times New Roman", serif; font-size: 30pt; line-height: 1.08; }
+      .subtitle { max-width: 690px; margin: 0; color: #fff7ed; font-size: 12pt; }
+      .meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 28px; }
+      .meta div { padding: 12px; background: rgba(255,255,255,.11); border: 1px solid rgba(255,255,255,.22); border-radius: 8px; }
+      .meta strong { display: block; color: white; font-size: 8.5pt; text-transform: uppercase; }
+      h2 { margin: 26px 0 10px; padding-bottom: 7px; color: var(--navy); border-bottom: 2px solid var(--line); font-size: 16pt; }
+      h3 { margin: 18px 0 8px; color: #24324d; font-size: 12.5pt; }
+      p { margin: 7px 0; }
+      .callout { padding: 12px 14px; margin: 12px 0; background: var(--panel); border-left: 5px solid var(--blue); border-radius: 8px; }
+      .success { border-left-color: var(--green); }
+      .warning { border-left-color: var(--amber); }
+      .issue { border-left-color: var(--rose); }
+      .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 12px 0; }
+      .card { padding: 14px; border: 1px solid var(--line); border-top: 5px solid var(--teal); border-radius: 8px; background: #fff; }
+      .card:nth-child(2) { border-top-color: var(--blue); }
+      .card:nth-child(3) { border-top-color: var(--amber); }
+      .card h3 { margin-top: 0; }
+      table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+      th { color: white; background: var(--navy); text-align: left; }
+      th, td { padding: 9px 10px; border: 1px solid var(--line); vertical-align: top; }
+      tr:nth-child(even) td { background: #f8fafc; }
+      code, pre { font-family: Consolas, "Courier New", monospace; }
+      pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: 10px 0 14px; padding: 12px 14px; color: #e5e7eb; background: var(--code); border-radius: 8px; font-size: 8.4pt; line-height: 1.42; }
+      .status { display: inline-block; padding: 5px 10px; color: white; background: var(--green); border-radius: 999px; font-size: 9pt; font-weight: 700; }
+      .page-break { page-break-before: always; }
+    </style>
+  </head>
+  <body>
+    <section class="cover">
+      <p class="eyebrow">Email Campaign Platform</p>
+      <h1>AWS Base Module Documentation</h1>
+      <p class="subtitle">Business-style build record for AWS account preparation, SES/S3/SQS setup, environment configuration, dev email fallback, queue helpers, and final verification.</p>
+      <div class="meta">
+        <div><strong>Time Block</strong>11:45 AM - 12:15 PM</div>
+        <div><strong>Module</strong>AWS Base</div>
+        <div><strong>Status</strong>Complete</div>
+      </div>
+    </section>
+
+    <h2>Objective</h2>
+    <div class="callout">
+      Prepare the platform for AWS-backed email sending, asset storage, and queue processing while keeping the application safe for local development through <code>EMAIL_PROVIDER=dev</code>.
+    </div>
+
+    <h2>Why This Module Matters</h2>
+    <div class="grid">
+      <div class="card"><h3>SES Ready</h3><p>The mailer can send through AWS SES later, but logs safely in dev mode today.</p></div>
+      <div class="card"><h3>SQS Ready</h3><p>The app has queue helpers for campaign sending and future worker processing.</p></div>
+      <div class="card"><h3>S3 Ready</h3><p>The app has an upload helper for future email images and template assets.</p></div>
+    </div>
+
+    <h2>AWS Console Setup Completed</h2>
+    <table>
+      <tr><th>Service</th><th>Setup</th><th>Purpose</th></tr>
+      <tr><td>IAM</td><td>Created/used development access credentials and attached email/storage/queue permissions.</td><td>Allows local code to call AWS services.</td></tr>
+      <tr><td>SES</td><td>Verified sender email in Asia Pacific Hyderabad.</td><td>Required before SES can send mail from that address.</td></tr>
+      <tr><td>SES Configuration Set</td><td><code>email-platform-events</code></td><td>Future open, click, delivery, bounce, and complaint event tracking.</td></tr>
+      <tr><td>S3</td><td><code>email-platform-assets-shirisha-2026</code></td><td>Future storage for template images and assets.</td></tr>
+      <tr><td>SQS</td><td><code>email-platform-send-queue</code> and <code>email-platform-events-queue</code></td><td>Future background email sending and SES event processing.</td></tr>
+      <tr><td>Region</td><td><code>ap-south-2</code> Hyderabad</td><td>All AWS resources and code config use the same region.</td></tr>
+    </table>
+
+    <h2>Security Note</h2>
+    <div class="callout issue">
+      AWS keys were pasted during setup. They are redacted in this documentation. Rotate/delete that IAM access key in AWS IAM and create a fresh key before deploying or committing anything.
+    </div>
+
+    <h2>Environment Configuration</h2>
+    <p>The final environment targets AWS Hyderabad and keeps sending in development mode.</p>
+    <pre>DATABASE_URL=&quot;postgresql://postgres:postgres@localhost:5433/email_campaign_platform?schema=public&quot;
+
+JWT_ACCESS_SECRET=&quot;change-me-access-secret&quot;
+JWT_REFRESH_SECRET=&quot;change-me-refresh-secret&quot;
+ACCESS_TOKEN_MINUTES=&quot;15&quot;
+REFRESH_TOKEN_DAYS=&quot;7&quot;
+
+API_PORT=&quot;4000&quot;
+WEB_ORIGIN=&quot;http://localhost:5173&quot;
+
+AWS_REGION=&quot;ap-south-2&quot;
+AWS_ACCESS_KEY_ID=&quot;REDACTED_ROTATE_KEY&quot;
+AWS_SECRET_ACCESS_KEY=&quot;REDACTED_ROTATE_SECRET&quot;
+SES_CONFIGURATION_SET=&quot;email-platform-events&quot;
+SES_FROM_EMAIL=&quot;manapuramshiri17@gmail.com&quot;
+S3_BUCKET=&quot;email-platform-assets-shirisha-2026&quot;
+
+SQS_SEND_QUEUE_URL=&quot;https://sqs.ap-south-2.amazonaws.com/316704942193/email-platform-send-queue&quot;
+SQS_EVENTS_QUEUE_URL=&quot;https://sqs.ap-south-2.amazonaws.com/316704942193/email-platform-events-queue&quot;
+
+EMAIL_PROVIDER=&quot;dev&quot;
+</pre>
+
+    <h2>Code Implemented</h2>
+    <table>
+      <tr><th>File</th><th>Purpose</th></tr>
+      <tr><td><code>apps/api/src/config/env.ts</code></td><td>Validates required database, JWT, AWS, SES, S3, SQS, and provider variables.</td></tr>
+      <tr><td><code>apps/api/src/services/mailer.ts</code></td><td>Provides dev email logging and future SESv2 email sending with unsubscribe headers.</td></tr>
+      <tr><td><code>apps/api/src/services/storage.ts</code></td><td>Uploads future email assets to S3.</td></tr>
+      <tr><td><code>apps/api/src/services/queue.ts</code></td><td>Logs queue jobs in dev mode and can send jobs to SQS later.</td></tr>
+      <tr><td><code>apps/worker/src/config/env.ts</code></td><td>Validates worker-side database and AWS environment variables.</td></tr>
+      <tr><td><code>apps/worker/src/services/queue.ts</code></td><td>Reads and deletes SQS send jobs when real queue mode is enabled.</td></tr>
+      <tr><td><code>apps/api/src/index.ts</code></td><td>Added temporary dev routes for testing email and queue integrations.</td></tr>
+    </table>
+
+    <h2>Dev Test Routes</h2>
+    <table>
+      <tr><th>Route</th><th>Result</th></tr>
+      <tr><td><code>POST /dev/test-email</code></td><td>Returned <code>{ "provider": "dev", "messageId": "dev-..." }</code></td></tr>
+      <tr><td><code>POST /dev/test-queue</code></td><td>Expected to return <code>{ "provider": "dev", "messageId": "dev-queue-..." }</code> while <code>EMAIL_PROVIDER=dev</code>.</td></tr>
+    </table>
+
+    <h2>Commands Run</h2>
+    <pre>pnpm --filter api add @aws-sdk/client-sesv2 @aws-sdk/client-s3 @aws-sdk/client-sqs
+pnpm --filter worker add @aws-sdk/client-sesv2 @aws-sdk/client-sqs
+pnpm --filter worker add zod
+pnpm --filter worker add -D dotenv-cli
+pnpm --filter api dev
+curl -X POST http://localhost:4000/dev/test-email
+pnpm --filter api typecheck
+pnpm --filter api build
+pnpm typecheck
+pnpm build</pre>
+
+    <h2>Successful Outputs</h2>
+    <h3>Dev Email Test</h3>
+    <pre>{"provider":"dev","messageId":"dev-1778396911069"}</pre>
+    <h3>Root Typecheck</h3>
+    <pre>apps/api typecheck completed
+apps/web typecheck completed
+apps/worker typecheck completed</pre>
+    <h3>Root Build</h3>
+    <pre>apps/api build completed
+apps/web build completed
+apps/worker build completed</pre>
+
+    <h2>Issues Found and Fixed</h2>
+    <div class="callout issue"><strong>Worker missing zod:</strong> worker env validation imported zod before it was installed. Fixed by adding <code>zod</code> to worker dependencies.</div>
+    <div class="callout issue"><strong>API env not loading:</strong> API dev command originally ran <code>tsx watch src/index.ts</code> directly. Fixed by loading root <code>.env</code> through <code>dotenv-cli</code>.</div>
+    <div class="callout issue"><strong>Worker env loading:</strong> worker scripts were updated to load root <code>.env</code> consistently.</div>
+    <div class="callout issue"><strong>Filter confusion:</strong> direct <code>--filter worker</code> did not match, but root typecheck/build confirmed worker compilation succeeded.</div>
+
+    <h2>Completion Status</h2>
+    <p><span class="status">AWS Base Module Complete</span></p>
+    <p>AWS account resources are prepared, local environment is configured, AWS SDK packages are installed, API/worker helpers are implemented, dev email route works, and the monorepo passes typecheck and build.</p>
+
+    <h2>Next Module</h2>
+    <div class="callout warning"><strong>M1 Login & User Management:</strong> implement login, JWT auth, refresh handling, current user endpoint, role middleware, and profile/user-management foundations.</div>
+
+    <section class="page-break"></section>
+    <h2>Code Appendix</h2>
+
+    <h3>apps/api/package.json</h3>
+    <pre>{
+  &quot;name&quot;: &quot;api&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;private&quot;: true,
+  &quot;type&quot;: &quot;module&quot;,
+  &quot;main&quot;: &quot;dist/index.js&quot;,
+  &quot;scripts&quot;: {
+    &quot;dev&quot;: &quot;dotenv -e ../../.env -- tsx watch src/index.ts&quot;,
+    &quot;build&quot;: &quot;tsc -p tsconfig.json&quot;,
+    &quot;start&quot;: &quot;node dist/index.js&quot;,
+    &quot;typecheck&quot;: &quot;tsc -p tsconfig.json --noEmit&quot;,
+    &quot;lint&quot;: &quot;echo \&quot;lint api\&quot;&quot;,
+    &quot;prisma:generate&quot;: &quot;dotenv -e ../../.env -- prisma generate --schema ../../prisma/schema.prisma&quot;,
+    &quot;prisma:migrate&quot;: &quot;dotenv -e ../../.env -- prisma migrate dev --schema ../../prisma/schema.prisma&quot;,
+    &quot;prisma:seed&quot;: &quot;dotenv -e ../../.env -- tsx src/seed.ts&quot;,
+    &quot;prisma:studio&quot;: &quot;dotenv -e ../../.env -- prisma studio --schema ../../prisma/schema.prisma&quot;
+  },
+  &quot;dependencies&quot;: {
+    &quot;@aws-sdk/client-s3&quot;: &quot;^3.1045.0&quot;,
+    &quot;@aws-sdk/client-sesv2&quot;: &quot;^3.1045.0&quot;,
+    &quot;@aws-sdk/client-sqs&quot;: &quot;^3.1045.0&quot;,
+    &quot;@prisma/client&quot;: &quot;^6.19.3&quot;,
+    &quot;bcryptjs&quot;: &quot;^3.0.2&quot;,
+    &quot;cors&quot;: &quot;^2.8.5&quot;,
+    &quot;dotenv&quot;: &quot;^16.5.0&quot;,
+    &quot;express&quot;: &quot;^5.1.0&quot;,
+    &quot;jsonwebtoken&quot;: &quot;^9.0.2&quot;,
+    &quot;zod&quot;: &quot;^3.24.4&quot;
+  },
+  &quot;devDependencies&quot;: {
+    &quot;@types/bcryptjs&quot;: &quot;^2.4.6&quot;,
+    &quot;@types/cors&quot;: &quot;^2.8.17&quot;,
+    &quot;@types/express&quot;: &quot;^5.0.1&quot;,
+    &quot;@types/jsonwebtoken&quot;: &quot;^9.0.9&quot;,
+    &quot;@types/node&quot;: &quot;^22.15.17&quot;,
+    &quot;dotenv-cli&quot;: &quot;^7.4.4&quot;,
+    &quot;prisma&quot;: &quot;^6.19.3&quot;,
+    &quot;tsx&quot;: &quot;^4.19.4&quot;,
+    &quot;typescript&quot;: &quot;^5.8.3&quot;
+  }
+}
+</pre>
+
+    <h3>apps/api/src/config/env.ts</h3>
+    <pre>import { z } from &quot;zod&quot;;
+
+const envSchema = z.object({
+  DATABASE_URL: z.string().min(1),
+
+  JWT_ACCESS_SECRET: z.string().min(1),
+  JWT_REFRESH_SECRET: z.string().min(1),
+  ACCESS_TOKEN_MINUTES: z.coerce.number().default(15),
+  REFRESH_TOKEN_DAYS: z.coerce.number().default(7),
+
+  API_PORT: z.coerce.number().default(4000),
+  WEB_ORIGIN: z.string().url().default(&quot;http://localhost:5173&quot;),
+
+  AWS_REGION: z.string().default(&quot;ap-south-2&quot;),
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  SES_CONFIGURATION_SET: z.string().default(&quot;email-platform-events&quot;),
+  SES_FROM_EMAIL: z.string().email(),
+  S3_BUCKET: z.string().optional(),
+  SQS_SEND_QUEUE_URL: z.string().optional(),
+  SQS_EVENTS_QUEUE_URL: z.string().optional(),
+  EMAIL_PROVIDER: z.enum([&quot;dev&quot;, &quot;ses&quot;]).default(&quot;dev&quot;)
+});
+
+export const env = envSchema.parse(process.env);
+</pre>
+
+    <h3>apps/api/src/services/mailer.ts</h3>
+    <pre>import { SESv2Client, SendEmailCommand } from &quot;@aws-sdk/client-sesv2&quot;;
+import { env } from &quot;../config/env.js&quot;;
+
+type SendEmailInput = {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  from?: string;
+  replyTo?: string;
+  unsubscribeUrl?: string;
+};
+
+const ses = new SESv2Client({
+  region: env.AWS_REGION
+});
+
+export async function sendEmail(input: SendEmailInput) {
+  const fromEmail = input.from ?? env.SES_FROM_EMAIL;
+
+  if (env.EMAIL_PROVIDER === &quot;dev&quot;) {
+    console.log(&quot;[DEV EMAIL]&quot;);
+    console.log(&quot;To:&quot;, input.to);
+    console.log(&quot;Subject:&quot;, input.subject);
+    console.log(&quot;From:&quot;, fromEmail);
+    console.log(&quot;Reply-To:&quot;, input.replyTo ?? &quot;-&quot;);
+    console.log(&quot;Unsubscribe:&quot;, input.unsubscribeUrl ?? &quot;-&quot;);
+    console.log(&quot;HTML:&quot;, input.html.slice(0, 300));
+
+    return {
+      provider: &quot;dev&quot;,
+      messageId: `dev-${Date.now()}`
+    };
+  }
+
+  const headers = input.unsubscribeUrl
+    ? [
+        {
+          Name: &quot;List-Unsubscribe&quot;,
+          Value: `&lt;${input.unsubscribeUrl}&gt;`
+        },
+        {
+          Name: &quot;List-Unsubscribe-Post&quot;,
+          Value: &quot;List-Unsubscribe=One-Click&quot;
+        }
+      ]
+    : undefined;
+
+  const result = await ses.send(
+    new SendEmailCommand({
+      FromEmailAddress: fromEmail,
+      Destination: {
+        ToAddresses: [input.to]
+      },
+      ReplyToAddresses: input.replyTo ? [input.replyTo] : undefined,
+      ConfigurationSetName: env.SES_CONFIGURATION_SET,
+      Content: {
+        Simple: {
+          Subject: {
+            Data: input.subject,
+            Charset: &quot;UTF-8&quot;
+          },
+          Body: {
+            Html: {
+              Data: input.html,
+              Charset: &quot;UTF-8&quot;
+            },
+            Text: input.text
+              ? {
+                  Data: input.text,
+                  Charset: &quot;UTF-8&quot;
+                }
+              : undefined
+          },
+          Headers: headers
+        }
+      }
+    })
+  );
+
+  return {
+    provider: &quot;ses&quot;,
+    messageId: result.MessageId
+  };
+}
+</pre>
+
+    <h3>apps/api/src/services/storage.ts</h3>
+    <pre>import { PutObjectCommand, S3Client } from &quot;@aws-sdk/client-s3&quot;;
+import { env } from &quot;../config/env.js&quot;;
+
+const s3 = new S3Client({
+  region: env.AWS_REGION
+});
+
+type UploadAssetInput = {
+  key: string;
+  body: Buffer;
+  contentType: string;
+};
+
+export async function uploadAsset(input: UploadAssetInput) {
+  if (!env.S3_BUCKET) {
+    throw new Error(&quot;S3_BUCKET is not configured.&quot;);
+  }
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: env.S3_BUCKET,
+      Key: input.key,
+      Body: input.body,
+      ContentType: input.contentType
+    })
+  );
+
+  return {
+    bucket: env.S3_BUCKET,
+    key: input.key,
+    url: `https://${env.S3_BUCKET}.s3.${env.AWS_REGION}.amazonaws.com/${input.key}`
+  };
+}
+</pre>
+
+    <h3>apps/api/src/services/queue.ts</h3>
+    <pre>import { SendMessageCommand, SQSClient } from &quot;@aws-sdk/client-sqs&quot;;
+import { env } from &quot;../config/env.js&quot;;
+
+const sqs = new SQSClient({
+  region: env.AWS_REGION
+});
+
+export async function enqueueSendJob(payload: unknown) {
+  if (!env.SQS_SEND_QUEUE_URL) {
+    console.log(&quot;[DEV QUEUE] send job&quot;);
+    console.log(JSON.stringify(payload, null, 2));
+
+    return {
+      provider: &quot;dev&quot;,
+      messageId: `dev-queue-${Date.now()}`
+    };
+  }
+
+  if (env.EMAIL_PROVIDER === &quot;dev&quot;) {
+    console.log(&quot;[DEV QUEUE] send job&quot;);
+    console.log(JSON.stringify(payload, null, 2));
+
+    return {
+      provider: &quot;dev&quot;,
+      messageId: `dev-queue-${Date.now()}`
+    };
+  }
+
+  const result = await sqs.send(
+    new SendMessageCommand({
+      QueueUrl: env.SQS_SEND_QUEUE_URL,
+      MessageBody: JSON.stringify(payload)
+    })
+  );
+
+  return {
+    provider: &quot;sqs&quot;,
+    messageId: result.MessageId
+  };
+}
+</pre>
+
+    <h3>apps/api/src/index.ts</h3>
+    <pre>import &quot;dotenv/config&quot;;
+import express from &quot;express&quot;;
+import cors from &quot;cors&quot;;
+import { sendEmail } from &quot;./services/mailer.js&quot;;
+import { enqueueSendJob } from &quot;./services/queue.js&quot;;
+
+const app = express();
+
+const port = Number(process.env.API_PORT ?? 4000);
+const webOrigin = process.env.WEB_ORIGIN ?? &quot;http://localhost:5173&quot;;
+
+app.use(cors({ origin: webOrigin }));
+app.use(express.json());
+
+app.get(&quot;/&quot;, (_req, res) =&gt; {
+  res.json({
+    message: &quot;Email Campaign Platform API&quot;,
+    health: &quot;/health&quot;
+  });
+});
+
+app.get(&quot;/health&quot;, (_req, res) =&gt; {
+  res.json({
+    status: &quot;ok&quot;,
+    service: &quot;api&quot;
+  });
+});
+
+app.post(&quot;/dev/test-email&quot;, async (_req, res) =&gt; {
+  const result = await sendEmail({
+    to: &quot;test@example.com&quot;,
+    subject: &quot;Dev email test&quot;,
+    html: &quot;&lt;h1&gt;Hello from dev mailer&lt;/h1&gt;&quot;,
+    unsubscribeUrl: &quot;http://localhost:4000/unsubscribe?uid=dev-test&quot;
+  });
+
+  res.json(result);
+});
+
+app.post(&quot;/dev/test-queue&quot;, async (_req, res) =&gt; {
+  const result = await enqueueSendJob({
+    type: &quot;SEND_EMAIL&quot;,
+    campaignId: &quot;dev-campaign&quot;,
+    contactId: &quot;dev-contact&quot;
+  });
+
+  res.json(result);
+});
+
+app.listen(port, () =&gt; {
+  console.log(`API running on http://localhost:${port}`);
+});
+</pre>
+
+    <h3>apps/worker/src/config/env.ts</h3>
+    <pre>import { z } from &quot;zod&quot;;
+
+const envSchema = z.object({
+  DATABASE_URL: z.string().min(1),
+
+  AWS_REGION: z.string().default(&quot;ap-south-2&quot;),
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  SES_CONFIGURATION_SET: z.string().default(&quot;email-platform-events&quot;),
+  SES_FROM_EMAIL: z.string().email(),
+  SQS_SEND_QUEUE_URL: z.string().optional(),
+  SQS_EVENTS_QUEUE_URL: z.string().optional(),
+  EMAIL_PROVIDER: z.enum([&quot;dev&quot;, &quot;ses&quot;]).default(&quot;dev&quot;)
+});
+
+export const env = envSchema.parse(process.env);
+</pre>
+
+    <h3>apps/worker/src/services/queue.ts</h3>
+    <pre>import {
+  DeleteMessageCommand,
+  ReceiveMessageCommand,
+  SQSClient
+} from &quot;@aws-sdk/client-sqs&quot;;
+import { env } from &quot;../config/env.js&quot;;
+
+const sqs = new SQSClient({
+  region: env.AWS_REGION
+});
+
+export async function receiveSendJobs() {
+  if (!env.SQS_SEND_QUEUE_URL || env.EMAIL_PROVIDER === &quot;dev&quot;) {
+    console.log(&quot;[DEV WORKER] no real SQS polling in dev mode&quot;);
+    return [];
+  }
+
+  const result = await sqs.send(
+    new ReceiveMessageCommand({
+      QueueUrl: env.SQS_SEND_QUEUE_URL,
+      MaxNumberOfMessages: 5,
+      WaitTimeSeconds: 5
+    })
+  );
+
+  return result.Messages ?? [];
+}
+
+export async function deleteSendJob(receiptHandle: string) {
+  if (!env.SQS_SEND_QUEUE_URL || env.EMAIL_PROVIDER === &quot;dev&quot;) {
+    return;
+  }
+
+  await sqs.send(
+    new DeleteMessageCommand({
+      QueueUrl: env.SQS_SEND_QUEUE_URL,
+      ReceiptHandle: receiptHandle
+    })
+  );
+}
+</pre>
+  </body>
+</html>

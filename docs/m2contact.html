@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>M2 Contact List Management Documentation</title>
+    <style>
+      @page { size: A4; margin: 18mm 16mm; }
+      :root {
+        --navy: #172033;
+        --blue: #1f5eff;
+        --teal: #009b8f;
+        --amber: #d88700;
+        --rose: #c2415a;
+        --green: #16835f;
+        --ink: #222836;
+        --line: #d8dee9;
+        --panel: #f5f7fb;
+        --code: #111827;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); font-family: "Segoe UI", Arial, sans-serif; font-size: 10.5pt; line-height: 1.5; background: #fff; }
+      .cover { padding: 34px 38px; color: white; background: linear-gradient(135deg, var(--navy), #155b89); border-radius: 12px; margin-bottom: 28px; }
+      .eyebrow { margin: 0 0 16px; color: #cde8ff; font-size: 9pt; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; }
+      h1 { margin: 0 0 12px; font-family: Georgia, "Times New Roman", serif; font-size: 30pt; line-height: 1.08; }
+      .subtitle { max-width: 690px; margin: 0; color: #eef7ff; font-size: 12pt; }
+      .meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 28px; }
+      .meta div { padding: 12px; background: rgba(255,255,255,.11); border: 1px solid rgba(255,255,255,.22); border-radius: 8px; }
+      .meta strong { display: block; color: white; font-size: 8.5pt; text-transform: uppercase; }
+      h2 { margin: 26px 0 10px; padding-bottom: 7px; color: var(--navy); border-bottom: 2px solid var(--line); font-size: 16pt; }
+      h3 { margin: 18px 0 8px; color: #24324d; font-size: 12.5pt; }
+      p { margin: 7px 0; }
+      .callout { padding: 12px 14px; margin: 12px 0; background: var(--panel); border-left: 5px solid var(--blue); border-radius: 8px; }
+      .success { border-left-color: var(--green); }
+      .warning { border-left-color: var(--amber); }
+      .issue { border-left-color: var(--rose); }
+      .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 12px 0; }
+      .card { padding: 14px; border: 1px solid var(--line); border-top: 5px solid var(--teal); border-radius: 8px; background: #fff; }
+      .card:nth-child(2) { border-top-color: var(--blue); }
+      .card:nth-child(3) { border-top-color: var(--amber); }
+      .card h3 { margin-top: 0; }
+      table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+      th { color: white; background: var(--navy); text-align: left; }
+      th, td { padding: 9px 10px; border: 1px solid var(--line); vertical-align: top; }
+      tr:nth-child(even) td { background: #f8fafc; }
+      code, pre { font-family: Consolas, "Courier New", monospace; }
+      pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: 10px 0 14px; padding: 12px 14px; color: #e5e7eb; background: var(--code); border-radius: 8px; font-size: 8.4pt; line-height: 1.42; }
+      .status { display: inline-block; padding: 5px 10px; color: white; background: var(--green); border-radius: 999px; font-size: 9pt; font-weight: 700; }
+      .page-break { page-break-before: always; }
+    </style>
+  </head>
+  <body>
+    <section class="cover">
+      <p class="eyebrow">Email Campaign Platform</p>
+      <h1>M2 Contact List Management Documentation</h1>
+      <p class="subtitle">Business-style build record for list management, contact CRUD, CSV import workflow, segments, bulk actions, contact detail history, and role-based restrictions.</p>
+      <div class="meta">
+        <div><strong>Module</strong>M2 Contact List Management</div>
+        <div><strong>Scope</strong>Backend + Frontend</div>
+        <div><strong>Status</strong>Complete</div>
+      </div>
+    </section>
+
+    <h2>Objective</h2>
+    <div class="callout">
+      Implement the full M2 address-book layer: contact lists, contact data operations, CSV import (preview + commit), smart segments, and role-aware behavior for Admin users.
+    </div>
+
+    <h2>Why This Module Matters</h2>
+    <div class="grid">
+      <div class="card"><h3>List Foundation</h3><p>Campaign recipients are now organized by reusable lists and list memberships.</p></div>
+      <div class="card"><h3>Import at Scale</h3><p>CSV preview and commit pipeline supports practical bulk onboarding of contacts.</p></div>
+      <div class="card"><h3>Targeting Ready</h3><p>Segments provide dynamic filters to support campaign targeting in upcoming modules.</p></div>
+    </div>
+
+    <h2>API Coverage Completed</h2>
+    <table>
+      <tr><th>Area</th><th>Endpoints</th><th>Status</th></tr>
+      <tr><td>Lists</td><td><code>GET/POST /api/lists</code>, <code>GET/PUT/DELETE /api/lists/:id</code></td><td>Done</td></tr>
+      <tr><td>List Contacts</td><td><code>GET /api/lists/:id/contacts</code> with search/sort/pagination</td><td>Done</td></tr>
+      <tr><td>Bulk Actions</td><td><code>POST /api/lists/:id/contacts/bulk</code></td><td>Done</td></tr>
+      <tr><td>Import</td><td><code>POST /api/lists/:id/import</code> (preview/commit)</td><td>Done</td></tr>
+      <tr><td>Contacts</td><td><code>POST /api/contacts</code>, <code>GET/PUT/DELETE /api/contacts/:id</code></td><td>Done</td></tr>
+      <tr><td>Segments</td><td><code>GET/POST /api/segments</code>, <code>GET /api/segments/:id/count</code></td><td>Done</td></tr>
+    </table>
+
+    <h2>Frontend Coverage Completed</h2>
+    <table>
+      <tr><th>Screen/Feature</th><th>Description</th><th>Status</th></tr>
+      <tr><td>Contacts Workspace</td><td>Integrated under <code>/contacts/lists</code> inside app shell</td><td>Done</td></tr>
+      <tr><td>Lists Panel</td><td>Create list + switch active list + count visibility</td><td>Done</td></tr>
+      <tr><td>Contacts Table</td><td>Search, sort, select, refresh, row-level detail open</td><td>Done</td></tr>
+      <tr><td>Bulk Actions</td><td>Status update and remove-from-list actions</td><td>Done</td></tr>
+      <tr><td>CSV Import UI</td><td>Preview rows + import summary output</td><td>Done</td></tr>
+      <tr><td>Segments Builder</td><td>AND/OR rules with dynamic conditions and create/list</td><td>Done</td></tr>
+      <tr><td>Role-based UX</td><td>Viewer read-only mode (disabled/hidden write actions)</td><td>Done</td></tr>
+    </table>
+
+    <h2>Role Behavior Implemented</h2>
+    <div class="callout success">
+      <strong>SUPER_ADMIN / CAMPAIGN_MANAGER:</strong> full M2 write access.<br />
+      <strong>VIEWER:</strong> read-only access for lists/contacts/segments with write actions disabled.
+    </div>
+
+    <h2>Validation Commands</h2>
+    <pre>pnpm --filter api typecheck
+pnpm --filter web typecheck
+pnpm --filter api build
+pnpm --filter web build</pre>
+
+    <h2>Functional Verification Matrix</h2>
+    <table>
+      <tr><th>Test Case</th><th>Expected</th><th>Result</th></tr>
+      <tr><td>Login + token auth</td><td>Protected APIs accessible with Bearer token</td><td>Pass</td></tr>
+      <tr><td>List create/fetch/update/delete</td><td>List lifecycle works for write roles</td><td>Pass</td></tr>
+      <tr><td>Contact create + membership</td><td>Contact appears in selected list</td><td>Pass</td></tr>
+      <tr><td>List contacts search/sort</td><td>Query params return ordered filtered data</td><td>Pass</td></tr>
+      <tr><td>Bulk status update</td><td>Selected contacts status updated</td><td>Pass</td></tr>
+      <tr><td>Bulk remove</td><td>Selected contacts removed from list</td><td>Pass</td></tr>
+      <tr><td>CSV preview</td><td>Headers + previewRows + totalRows returned</td><td>Pass</td></tr>
+      <tr><td>CSV commit</td><td>importJob summary with added/updated/skipped/errored</td><td>Pass</td></tr>
+      <tr><td>Segments create/list/count</td><td>Rules saved and count returned</td><td>Pass</td></tr>
+      <tr><td>Viewer restrictions</td><td>Read-only behavior enforced in UI</td><td>Pass</td></tr>
+    </table>
+
+    <h2>Key Files Implemented</h2>
+    <table>
+      <tr><th>File</th><th>Purpose</th></tr>
+      <tr><td><code>apps/api/src/routes/lists.ts</code></td><td>Lists CRUD, list contacts query, bulk actions, import pipeline.</td></tr>
+      <tr><td><code>apps/api/src/routes/contacts.ts</code></td><td>Contacts CRUD + contact detail with memberships/events pagination.</td></tr>
+      <tr><td><code>apps/api/src/routes/segments.ts</code></td><td>Segments create/list/count handling.</td></tr>
+      <tr><td><code>apps/api/src/lib/csv.ts</code></td><td>CSV parser used by import preview/commit.</td></tr>
+      <tr><td><code>apps/api/src/index.ts</code></td><td>Route registration for M2 endpoints.</td></tr>
+      <tr><td><code>apps/web/src/pages/contact-management-page.tsx</code></td><td>M2 UI implementation with role-aware controls.</td></tr>
+      <tr><td><code>apps/web/src/main.tsx</code></td><td>M2 route integration in admin shell.</td></tr>
+      <tr><td><code>apps/web/src/lib/api.ts</code></td><td>Token-aware API helper for frontend calls.</td></tr>
+    </table>
+
+    <h2>Completion Status</h2>
+    <p><span class="status">M2 Module Complete</span></p>
+    <p>Contact list management is now operational end-to-end and ready for M3 Template Builder integration.</p>
+
+    <h2>Next Module</h2>
+    <div class="callout warning">
+      <strong>M3 Template Builder:</strong> implement template library, editor integration, starter templates, merge tags, and HTML handling.
+    </div>
+
+    <section class="page-break"></section>
+    <h2>Code Appendix</h2>
+
+    <h3>apps/api/src/routes/lists.ts</h3>
+    <pre>[Paste final lists.ts from your workspace]</pre>
+
+    <h3>apps/api/src/routes/contacts.ts</h3>
+    <pre>[Paste final contacts.ts from your workspace]</pre>
+
+    <h3>apps/api/src/routes/segments.ts</h3>
+    <pre>[Paste final segments.ts from your workspace]</pre>
+
+    <h3>apps/web/src/pages/contact-management-page.tsx</h3>
+    <pre>[Paste final contact-management-page.tsx from your workspace]</pre>
+
+    <h3>apps/web/src/main.tsx</h3>
+    <pre>[Paste final main.tsx from your workspace]</pre>
+  </body>
+</html>

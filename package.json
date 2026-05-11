@@ -1,0 +1,36 @@
+{
+  "name": "email-campaign-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "In-house email campaign platform",
+  "type": "module",
+  "packageManager": "pnpm@11.0.9",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "verify": "pnpm typecheck && pnpm build",
+    "start:api": "pnpm --filter api start",
+    "start:web": "pnpm --filter web preview",
+    "start:worker": "pnpm --filter worker start",
+    "test:smoke": "node scripts/smoke-test.mjs",
+    "test:frontend": "playwright test scripts/frontend-pages.spec.js --reporter=list",
+    "clean": "node -e \"const fs=require('fs'); for (const p of ['node_modules','.turbo']) fs.rmSync(p,{recursive:true,force:true});\"",
+    "db:generate": "pnpm --filter api prisma:generate",
+    "db:migrate": "pnpm --filter api prisma:migrate",
+    "db:seed": "pnpm --filter api prisma:seed",
+    "db:studio": "pnpm --filter api prisma:studio"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "prisma": "6.19.3"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3"
+  }
+}

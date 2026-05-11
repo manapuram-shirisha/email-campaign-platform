@@ -1,0 +1,2083 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>M1 Login and User Management Documentation</title>
+    <style>
+      @page { size: A4; margin: 18mm 16mm; }
+      :root {
+        --navy: #172033;
+        --blue: #1f5eff;
+        --teal: #009b8f;
+        --amber: #d88700;
+        --rose: #c2415a;
+        --green: #16835f;
+        --ink: #222836;
+        --line: #d8dee9;
+        --panel: #f5f7fb;
+        --code: #111827;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); font-family: "Segoe UI", Arial, sans-serif; font-size: 10.5pt; line-height: 1.5; background: #fff; }
+      .cover { padding: 34px 38px; color: white; background: linear-gradient(135deg, var(--navy), #143f7a); border-radius: 12px; margin-bottom: 28px; }
+      .eyebrow { margin: 0 0 16px; color: #b6dcff; font-size: 9pt; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; }
+      h1 { margin: 0 0 12px; font-family: Georgia, "Times New Roman", serif; font-size: 30pt; line-height: 1.08; }
+      .subtitle { max-width: 720px; margin: 0; color: #eff6ff; font-size: 12pt; }
+      .meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 28px; }
+      .meta div { padding: 12px; background: rgba(255,255,255,.11); border: 1px solid rgba(255,255,255,.22); border-radius: 8px; }
+      .meta strong { display: block; color: white; font-size: 8.5pt; text-transform: uppercase; }
+      h2 { margin: 26px 0 10px; padding-bottom: 7px; color: var(--navy); border-bottom: 2px solid var(--line); font-size: 16pt; }
+      h3 { margin: 18px 0 8px; color: #24324d; font-size: 12.5pt; }
+      p { margin: 7px 0; }
+      .callout { padding: 12px 14px; margin: 12px 0; background: var(--panel); border-left: 5px solid var(--blue); border-radius: 8px; }
+      .success { border-left-color: var(--green); }
+      .warning { border-left-color: var(--amber); }
+      .issue { border-left-color: var(--rose); }
+      .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 12px 0; }
+      .card { padding: 14px; border: 1px solid var(--line); border-top: 5px solid var(--teal); border-radius: 8px; background: #fff; }
+      .card:nth-child(2) { border-top-color: var(--blue); }
+      .card:nth-child(3) { border-top-color: var(--amber); }
+      .card h3 { margin-top: 0; }
+      table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+      th { color: white; background: var(--navy); text-align: left; }
+      th, td { padding: 9px 10px; border: 1px solid var(--line); vertical-align: top; }
+      tr:nth-child(even) td { background: #f8fafc; }
+      code, pre { font-family: Consolas, "Courier New", monospace; }
+      pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: 10px 0 14px; padding: 12px 14px; color: #e5e7eb; background: var(--code); border-radius: 8px; font-size: 8.2pt; line-height: 1.42; }
+      .status { display: inline-block; padding: 5px 10px; color: white; background: var(--green); border-radius: 999px; font-size: 9pt; font-weight: 700; }
+      .page-break { page-break-before: always; }
+    </style>
+  </head>
+  <body>
+    <section class="cover">
+      <p class="eyebrow">Email Campaign Platform</p>
+      <h1>M1 Login and User Management</h1>
+      <p class="subtitle">Documentation focused only on M1 implementation: backend auth foundation, login/session routes, lockout and password reset, profile/user management, frontend screens, and final testing.</p>
+      <div class="meta">
+        <div><strong>Module</strong>M1</div>
+        <div><strong>Parts</strong>A - F</div>
+        <div><strong>Status</strong>Implemented</div>
+      </div>
+    </section>
+
+    <h2>M1 Scope</h2>
+    <div class="callout">
+      M1 covers admin login and user management only. Database setup and AWS setup were completed in previous modules and are not part of this document's work breakdown.
+    </div>
+
+    <h2>M1 Parts Overview</h2>
+    <table>
+      <tr><th>Part</th><th>Name</th><th>What Was Built</th><th>Status</th></tr>
+      <tr><td>A</td><td>Backend auth foundation</td><td>Prisma helper, bcrypt password helper, JWT helper, Express user typing, auth middleware, role middleware.</td><td>Complete</td></tr>
+      <tr><td>B</td><td>Login / refresh / me / logout</td><td>Auth routes for login, refresh token, current user, and logout.</td><td>Complete</td></tr>
+      <tr><td>C</td><td>Lockout + forgot/reset password</td><td>Failed-login lockout, forgot password token generation, reset password flow.</td><td>Complete</td></tr>
+      <tr><td>D</td><td>Profile + user management</td><td>Profile read/update/password update, user listing, invite, role assignment, deactivate.</td><td>Complete</td></tr>
+      <tr><td>E</td><td>Frontend login/profile/users screens</td><td>Responsive login, forgot/reset password, dashboard shell, profile page, users page, role-based sidebar.</td><td>Complete</td></tr>
+      <tr><td>F</td><td>Final testing</td><td>Manual curl tests, browser UI verification, typecheck/build validation.</td><td>Complete / final root verification recommended</td></tr>
+    </table>
+
+    <h2>Admin Role Model</h2>
+    <table>
+      <tr><th>Role</th><th>Who</th><th>What They Can Do</th></tr>
+      <tr><td>SUPER_ADMIN</td><td>IT / Platform Owner</td><td>Full access, user management, organisation/AWS settings, all modules.</td></tr>
+      <tr><td>CAMPAIGN_MANAGER</td><td>Marketing team</td><td>Create/manage contacts, templates, campaigns, analytics. Cannot manage users.</td></tr>
+      <tr><td>VIEWER</td><td>Leadership / stakeholders</td><td>Read-only dashboard/report posture. Cannot create or edit.</td></tr>
+    </table>
+
+    <h2>Part A: Backend Auth Foundation</h2>
+    <table>
+      <tr><th>File</th><th>Purpose</th></tr>
+      <tr><td><code>apps/api/src/lib/prisma.ts</code></td><td>Single Prisma Client helper for DB access.</td></tr>
+      <tr><td><code>apps/api/src/lib/password.ts</code></td><td>bcrypt hash and password verification helpers.</td></tr>
+      <tr><td><code>apps/api/src/lib/jwt.ts</code></td><td>Access/refresh token signing and verification.</td></tr>
+      <tr><td><code>apps/api/src/types/express.ts</code></td><td>Adds <code>req.user</code> typing for authenticated requests.</td></tr>
+      <tr><td><code>apps/api/src/middleware/auth.ts</code></td><td>Requires Bearer access token and attaches user payload.</td></tr>
+      <tr><td><code>apps/api/src/middleware/roles.ts</code></td><td>Enforces role-based route permissions.</td></tr>
+    </table>
+    <div class="callout success"><strong>Validation:</strong> TypeScript typecheck passed after Part A, proving the foundation compiled.</div>
+
+    <h2>Part B: Login / Refresh / Me / Logout</h2>
+    <table>
+      <tr><th>Method</th><th>Route</th><th>Purpose</th></tr>
+      <tr><td>POST</td><td>/api/auth/login</td><td>Validates email/password and returns access token, refresh token, and user.</td></tr>
+      <tr><td>POST</td><td>/api/auth/refresh</td><td>Returns a new access token from a refresh token.</td></tr>
+      <tr><td>POST</td><td>/api/auth/logout</td><td>Returns logout acknowledgement.</td></tr>
+      <tr><td>GET</td><td>/api/auth/me</td><td>Returns logged-in user from Bearer token.</td></tr>
+    </table>
+    <h3>Test Results</h3>
+    <pre>POST /api/auth/login
+Result: accessToken, refreshToken, and SUPER_ADMIN user returned.
+
+GET /api/auth/me
+Result: admin@example.com profile returned from Bearer token.</pre>
+
+    <h2>Part C: Lockout + Forgot/Reset Password</h2>
+    <table>
+      <tr><th>Feature</th><th>Implementation</th><th>Result</th></tr>
+      <tr><td>Failed login lockout</td><td>In-memory email+IP attempt map. Five failures lock login for 15 minutes.</td><td>Implemented.</td></tr>
+      <tr><td>Forgot password</td><td>Generates a 64-character reset token and logs/returns it in development.</td><td>Tested successfully.</td></tr>
+      <tr><td>Reset password</td><td>Consumes token, hashes new password with bcrypt, updates user.</td><td>Tested successfully.</td></tr>
+    </table>
+    <h3>Test Results</h3>
+    <pre>POST /api/auth/forgot-password
+Result: reset token generated.
+
+POST /api/auth/reset-password
+Result: { "message": "Password reset successful" }
+
+POST /api/auth/login after reset
+Result: login succeeded with Admin@123.</pre>
+    <div class="callout warning"><strong>Development note:</strong> <code>devResetToken</code> is exposed for local testing. Remove this from the response before production.</div>
+
+    <h2>Part D: Profile + User Management</h2>
+    <table>
+      <tr><th>Method</th><th>Route</th><th>Access</th><th>Purpose</th></tr>
+      <tr><td>GET</td><td>/api/profile</td><td>Authenticated admin</td><td>Read current profile.</td></tr>
+      <tr><td>PUT</td><td>/api/profile</td><td>Authenticated admin</td><td>Update name/email.</td></tr>
+      <tr><td>PUT</td><td>/api/profile/password</td><td>Authenticated admin</td><td>Update password after verifying current password.</td></tr>
+      <tr><td>GET</td><td>/api/users</td><td>SUPER_ADMIN</td><td>List organisation users.</td></tr>
+      <tr><td>POST</td><td>/api/users/invite</td><td>SUPER_ADMIN</td><td>Invite teammate and assign role.</td></tr>
+      <tr><td>PUT</td><td>/api/users/:id</td><td>SUPER_ADMIN</td><td>Update teammate name/role.</td></tr>
+      <tr><td>POST</td><td>/api/users/:id/deactivate</td><td>SUPER_ADMIN</td><td>Deactivate/delete teammate in MVP.</td></tr>
+    </table>
+    <h3>Test Results</h3>
+    <pre>GET /api/profile
+Result: Super Admin profile returned.
+
+PUT /api/profile
+Result: name changed to Super Admin Updated.
+
+GET /api/users
+Result: Super Admin can view users.
+
+POST /api/users/invite
+Result: manager@example.com created with CAMPAIGN_MANAGER.
+Result: viewer@example.com created with VIEWER.</pre>
+
+    <h2>Part E: Frontend Login/Profile/Users Screens</h2>
+    <table>
+      <tr><th>Screen</th><th>Route</th><th>Status</th></tr>
+      <tr><td>Login</td><td>/login</td><td>Email/password form, errors, forgot password link.</td></tr>
+      <tr><td>Forgot Password</td><td>/forgot-password</td><td>Email form and development reset token display.</td></tr>
+      <tr><td>Reset Password</td><td>/reset-password</td><td>Token and new password form.</td></tr>
+      <tr><td>Dashboard</td><td>/</td><td>Protected landing page after login with KPI placeholders.</td></tr>
+      <tr><td>Profile</td><td>/settings/profile</td><td>Name/email update and password update UI.</td></tr>
+      <tr><td>User Management</td><td>/settings/users</td><td>Super Admin user list and invite form.</td></tr>
+    </table>
+    <div class="callout"><strong>UI style:</strong> The frontend uses a clean operational-console style inspired by email campaign tools such as Zoho Campaigns: dark sidebar, restrained cards, compact tables, clear forms, and responsive layouts.</div>
+    <h3>Role-Based Sidebar</h3>
+    <table>
+      <tr><th>Role</th><th>Visible Menu</th></tr>
+      <tr><td>SUPER_ADMIN</td><td>Dashboard, Contacts, Templates, Campaigns, Analytics, Organisation, Users, Profile.</td></tr>
+      <tr><td>CAMPAIGN_MANAGER</td><td>Dashboard, Contacts, Templates, Campaigns, Analytics, Profile.</td></tr>
+      <tr><td>VIEWER</td><td>Dashboard, Analytics, Profile.</td></tr>
+    </table>
+
+    <h2>Part F: Final Testing</h2>
+    <table>
+      <tr><th>Check</th><th>Status</th></tr>
+      <tr><td>Admin login API</td><td>Passed.</td></tr>
+      <tr><td>Current user API</td><td>Passed.</td></tr>
+      <tr><td>Forgot/reset password API</td><td>Passed.</td></tr>
+      <tr><td>Profile read/update API</td><td>Passed.</td></tr>
+      <tr><td>User invite API for Campaign Manager</td><td>Passed.</td></tr>
+      <tr><td>User invite API for Viewer</td><td>Passed.</td></tr>
+      <tr><td>Frontend dashboard visual check</td><td>Passed.</td></tr>
+      <tr><td>Recommended final commands</td><td><code>pnpm typecheck</code> and <code>pnpm build</code>.</td></tr>
+    </table>
+
+    <h2>Limitations To Address Later</h2>
+    <div class="callout warning"><strong>Lockout storage:</strong> in-memory now, should move to Redis or DB for production.</div>
+    <div class="callout warning"><strong>Password reset storage:</strong> in-memory now, should store hashed reset tokens with expiry in DB.</div>
+    <div class="callout warning"><strong>Reset delivery:</strong> dev token is displayed now, later send reset emails through SES.</div>
+    <div class="callout warning"><strong>User deactivation:</strong> currently deletes user because schema lacks soft-delete/deactivation field.</div>
+
+    <h2>Completion Status</h2>
+    <p><span class="status">M1 Parts A-F Complete</span></p>
+    <p>M1 now has the backend and frontend foundation needed for admin authentication and user management.</p>
+
+    <h2>Next Module</h2>
+    <div class="callout"><strong>M2 Contact List Management:</strong> contacts, lists, imports, contact detail, segments, and related frontend screens.</div>
+
+    <section class="page-break"></section>
+    <h2>Code Appendix</h2>
+
+    <h3>Part A: apps/api/src/lib/prisma.ts</h3>
+    <pre>import { PrismaClient } from &quot;@prisma/client&quot;;
+
+export const prisma = new PrismaClient();
+</pre>
+
+    <h3>Part A: apps/api/src/lib/password.ts</h3>
+    <pre>import bcrypt from &quot;bcryptjs&quot;;
+
+export function hashPassword(password: string) {
+  return bcrypt.hash(password, 10);
+}
+
+export function verifyPassword(password: string, passwordHash: string) {
+  return bcrypt.compare(password, passwordHash);
+}
+</pre>
+
+    <h3>Part A: apps/api/src/lib/jwt.ts</h3>
+    <pre>import jwt from &quot;jsonwebtoken&quot;;
+import { env } from &quot;../config/env.js&quot;;
+
+export type AccessTokenPayload = {
+  sub: string;
+  email: string;
+  role: string;
+  orgId: string;
+};
+
+export function signAccessToken(payload: AccessTokenPayload) {
+  return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
+    expiresIn: `${env.ACCESS_TOKEN_MINUTES}m`
+  });
+}
+
+export function signRefreshToken(payload: AccessTokenPayload) {
+  return jwt.sign(payload, env.JWT_REFRESH_SECRET, {
+    expiresIn: `${env.REFRESH_TOKEN_DAYS}d`
+  });
+}
+
+export function verifyAccessToken(token: string) {
+  return jwt.verify(token, env.JWT_ACCESS_SECRET) as AccessTokenPayload;
+}
+
+export function verifyRefreshToken(token: string) {
+  return jwt.verify(token, env.JWT_REFRESH_SECRET) as AccessTokenPayload;
+}
+</pre>
+
+    <h3>Part A: apps/api/src/middleware/auth.ts</h3>
+    <pre>import type { NextFunction, Request, Response } from &quot;express&quot;;
+import { verifyAccessToken } from &quot;../lib/jwt.js&quot;;
+
+export function requireAuth(req: Request, res: Response, next: NextFunction) {
+  const header = req.headers.authorization;
+
+  if (!header?.startsWith(&quot;Bearer &quot;)) {
+    return res.status(401).json({
+      message: &quot;Missing authorization token&quot;
+    });
+  }
+
+  const token = header.slice(&quot;Bearer &quot;.length);
+
+  try {
+    req.user = verifyAccessToken(token);
+    return next();
+  } catch {
+    return res.status(401).json({
+      message: &quot;Invalid or expired token&quot;
+    });
+  }
+}
+</pre>
+
+    <h3>Part A: apps/api/src/middleware/roles.ts</h3>
+    <pre>import type { NextFunction, Request, Response } from &quot;express&quot;;
+
+export function requireRole(...roles: string[]) {
+  return (req: Request, res: Response, next: NextFunction) =&gt; {
+    if (!req.user) {
+      return res.status(401).json({
+        message: &quot;Authentication required&quot;
+      });
+    }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        message: &quot;Insufficient permissions&quot;
+      });
+    }
+
+    return next();
+  };
+}
+</pre>
+
+    <h3>Part B/C: apps/api/src/routes/auth.ts</h3>
+    <pre>import { Router } from &quot;express&quot;;
+import { z } from &quot;zod&quot;;
+import { prisma } from &quot;../lib/prisma.js&quot;;
+import {
+  signAccessToken,
+  signRefreshToken,
+  verifyRefreshToken
+} from &quot;../lib/jwt.js&quot;;
+import { hashPassword, verifyPassword } from &quot;../lib/password.js&quot;;
+import { requireAuth } from &quot;../middleware/auth.js&quot;;
+import {
+  clearFailedLogins,
+  getLoginLockStatus,
+  recordFailedLogin
+} from &quot;../lib/loginLockout.js&quot;;
+import {
+  consumePasswordResetToken,
+  createPasswordResetToken
+} from &quot;../lib/passwordReset.js&quot;;
+
+export const authRouter = Router();
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1)
+});
+
+function getRequestIp(req: { ip?: string; socket?: { remoteAddress?: string } }) {
+  return req.ip ?? req.socket?.remoteAddress ?? &quot;unknown&quot;;
+}
+
+authRouter.post(&quot;/login&quot;, async (req, res) =&gt; {
+  const parsed = loginSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({
+      message: &quot;Invalid login payload&quot;,
+      errors: parsed.error.flatten()
+    });
+  }
+
+  const ip = getRequestIp(req);
+  const lockStatus = getLoginLockStatus(parsed.data.email, ip);
+
+  if (lockStatus.locked) {
+    return res.status(429).json({
+      message: &quot;Too many failed login attempts. Try again later.&quot;,
+      lockedUntil: lockStatus.lockedUntil
+    });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: {
+      email: parsed.data.email
+    }
+  });
+
+  if (!user) {
+    const failed = recordFailedLogin(parsed.data.email, ip);
+
+    return res.status(401).json({
+      message: &quot;Invalid email or password&quot;,
+      attemptsRemaining: failed.attemptsRemaining
+    });
+  }
+
+  const validPassword = await verifyPassword(
+    parsed.data.password,
+    user.passwordHash
+  );
+
+  if (!validPassword) {
+    const failed = recordFailedLogin(parsed.data.email, ip);
+
+    return res.status(401).json({
+      message: &quot;Invalid email or password&quot;,
+      attemptsRemaining: failed.attemptsRemaining
+    });
+  }
+
+  clearFailedLogins(parsed.data.email, ip);
+
+  const tokenPayload = {
+    sub: user.id,
+    email: user.email,
+    role: user.role,
+    orgId: user.orgId
+  };
+
+  const accessToken = signAccessToken(tokenPayload);
+  const refreshToken = signRefreshToken(tokenPayload);
+
+  return res.json({
+    accessToken,
+    refreshToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      orgId: user.orgId
+    }
+  });
+});
+
+authRouter.post(&quot;/refresh&quot;, async (req, res) =&gt; {
+  const schema = z.object({
+    refreshToken: z.string().min(1)
+  });
+
+  const parsed = schema.safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({
+      message: &quot;Invalid refresh payload&quot;
+    });
+  }
+
+  try {
+    const payload = verifyRefreshToken(parsed.data.refreshToken);
+    const accessToken = signAccessToken(payload);
+
+    return res.json({
+      accessToken
+    });
+  } catch {
+    return res.status(401).json({
+      message: &quot;Invalid refresh token&quot;
+    });
+  }
+});
+
+authRouter.post(&quot;/logout&quot;, (_req, res) =&gt; {
+  return res.json({
+    message: &quot;Logged out&quot;
+  });
+});
+
+authRouter.get(&quot;/me&quot;, requireAuth, async (req, res) =&gt; {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: req.user!.sub
+    },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      orgId: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  });
+
+  if (!user) {
+    return res.status(404).json({
+      message: &quot;User not found&quot;
+    });
+  }
+
+  return res.json({
+    user
+  });
+});
+
+authRouter.post(&quot;/forgot-password&quot;, async (req, res) =&gt; {
+  const schema = z.object({
+    email: z.string().email()
+  });
+
+  const parsed = schema.safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({
+      message: &quot;Invalid forgot password payload&quot;
+    });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: {
+      email: parsed.data.email
+    }
+  });
+
+  let devResetToken: string | undefined;
+
+  if (user) {
+    devResetToken = createPasswordResetToken(user.email);
+    const resetUrl = `http://localhost:5173/reset-password?token=${devResetToken}`;
+
+    console.log(&quot;[PASSWORD RESET]&quot;);
+    console.log(&quot;Email:&quot;, user.email);
+    console.log(&quot;Reset URL:&quot;, resetUrl);
+  }
+
+  return res.json({
+    message: &quot;If an account exists, a password reset link has been sent.&quot;,
+    devResetToken
+  });
+});
+
+authRouter.post(&quot;/reset-password&quot;, async (req, res) =&gt; {
+  const schema = z.object({
+    token: z.string().min(1),
+    password: z.string().min(8)
+  });
+
+  const parsed = schema.safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({
+      message: &quot;Invalid reset password payload&quot;,
+      errors: parsed.error.flatten()
+    });
+  }
+
+  const tokenRecord = consumePasswordResetToken(parsed.data.token);
+
+  if (!tokenRecord) {
+    return res.status(400).json({
+      message: &quot;Invalid or expired reset token&quot;
+    });
+  }
+
+  const passwordHash = await hashPassword(parsed.data.password);
+
+  await prisma.user.update({
+    where: {
+      email: tokenRecord.email
+    },
+    data: {
+      passwordHash
+    }
+  });
+
+  return res.json({
+    message: &quot;Password reset successful&quot;
+  });
+});
+</pre>
+
+    <h3>Part C: apps/api/src/lib/loginLockout.ts</h3>
+    <pre>type LoginAttempt = {
+  count: number;
+  lockedUntil?: number;
+};
+
+const attempts = new Map&lt;string, LoginAttempt&gt;();
+
+const MAX_ATTEMPTS = 5;
+const LOCK_MINUTES = 15;
+
+function getKey(email: string, ip: string) {
+  return `${email.toLowerCase()}:${ip}`;
+}
+
+export function getLoginLockStatus(email: string, ip: string) {
+  const key = getKey(email, ip);
+  const attempt = attempts.get(key);
+
+  if (!attempt?.lockedUntil) {
+    return {
+      locked: false
+    };
+  }
+
+  if (Date.now() &gt; attempt.lockedUntil) {
+    attempts.delete(key);
+    return {
+      locked: false
+    };
+  }
+
+  return {
+    locked: true,
+    lockedUntil: new Date(attempt.lockedUntil).toISOString()
+  };
+}
+
+export function recordFailedLogin(email: string, ip: string) {
+  const key = getKey(email, ip);
+  const current = attempts.get(key) ?? {
+    count: 0
+  };
+
+  const nextCount = current.count + 1;
+
+  if (nextCount &gt;= MAX_ATTEMPTS) {
+    attempts.set(key, {
+      count: nextCount,
+      lockedUntil: Date.now() + LOCK_MINUTES * 60 * 1000
+    });
+
+    return {
+      locked: true,
+      attemptsRemaining: 0
+    };
+  }
+
+  attempts.set(key, {
+    count: nextCount
+  });
+
+  return {
+    locked: false,
+    attemptsRemaining: MAX_ATTEMPTS - nextCount
+  };
+}
+
+export function clearFailedLogins(email: string, ip: string) {
+  attempts.delete(getKey(email, ip));
+}
+</pre>
+
+    <h3>Part C: apps/api/src/lib/passwordReset.ts</h3>
+    <pre>import crypto from &quot;node:crypto&quot;;
+
+type PasswordResetToken = {
+  email: string;
+  token: string;
+  expiresAt: number;
+};
+
+const resetTokens = new Map&lt;string, PasswordResetToken&gt;();
+
+const RESET_MINUTES = 15;
+
+export function createPasswordResetToken(email: string) {
+  const token = crypto.randomBytes(32).toString(&quot;hex&quot;);
+
+  resetTokens.set(token, {
+    email: email.toLowerCase(),
+    token,
+    expiresAt: Date.now() + RESET_MINUTES * 60 * 1000
+  });
+
+  return token;
+}
+
+export function consumePasswordResetToken(token: string) {
+  const record = resetTokens.get(token);
+
+  if (!record) {
+    return null;
+  }
+
+  resetTokens.delete(token);
+
+  if (Date.now() &gt; record.expiresAt) {
+    return null;
+  }
+
+  return {
+    email: record.email
+  };
+}
+</pre>
+
+    <h3>Part D: apps/api/src/routes/profile.ts</h3>
+    <pre>import { Router } from &quot;express&quot;;
+import { z } from &quot;zod&quot;;
+import { prisma } from &quot;../lib/prisma.js&quot;;
+import { hashPassword, verifyPassword } from &quot;../lib/password.js&quot;;
+import { requireAuth } from &quot;../middleware/auth.js&quot;;
+
+export const profileRouter = Router();
+
+profileRouter.use(requireAuth);
+
+profileRouter.get(&quot;/&quot;, async (req, res) =&gt; {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: req.user!.sub
+    },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      orgId: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  });
+
+  if (!user) {
+    return res.status(404).json({
+      message: &quot;User not found&quot;
+    });
+  }
+
+  return res.json({
+    user
+  });
+});
+
+profileRouter.put(&quot;/&quot;, async (req, res) =&gt; {
+  const schema = z.object({
+    name: z.string().min(1).optional(),
+    email: z.string().email().optional()
+  });
+
+  const parsed = schema.safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({
+      message: &quot;Invalid profile payload&quot;,
+      errors: parsed.error.flatten()
+    });
+  }
+
+  const user = await prisma.user.update({
+    where: {
+      id: req.user!.sub
+    },
+    data: parsed.data,
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      orgId: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  });
+
+  return res.json({
+    user
+  });
+});
+
+profileRouter.put(&quot;/password&quot;, async (req, res) =&gt; {
+  const schema = z.object({
+    currentPassword: z.string().min(1),
+    newPassword: z.string().min(8)
+  });
+
+  const parsed = schema.safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({
+      message: &quot;Invalid password payload&quot;,
+      errors: parsed.error.flatten()
+    });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: {
+      id: req.user!.sub
+    }
+  });
+
+  if (!user) {
+    return res.status(404).json({
+      message: &quot;User not found&quot;
+    });
+  }
+
+  const validPassword = await verifyPassword(
+    parsed.data.currentPassword,
+    user.passwordHash
+  );
+
+  if (!validPassword) {
+    return res.status(401).json({
+      message: &quot;Current password is incorrect&quot;
+    });
+  }
+
+  const passwordHash = await hashPassword(parsed.data.newPassword);
+
+  await prisma.user.update({
+    where: {
+      id: user.id
+    },
+    data: {
+      passwordHash
+    }
+  });
+
+  return res.json({
+    message: &quot;Password updated&quot;
+  });
+});
+</pre>
+
+    <h3>Part D: apps/api/src/routes/users.ts</h3>
+    <pre>import { Router } from &quot;express&quot;;
+import { UserRole } from &quot;@prisma/client&quot;;
+import { z } from &quot;zod&quot;;
+import { prisma } from &quot;../lib/prisma.js&quot;;
+import { hashPassword } from &quot;../lib/password.js&quot;;
+import { requireAuth } from &quot;../middleware/auth.js&quot;;
+import { requireRole } from &quot;../middleware/roles.js&quot;;
+
+export const usersRouter = Router();
+
+usersRouter.use(requireAuth);
+usersRouter.use(requireRole(&quot;SUPER_ADMIN&quot;));
+
+usersRouter.get(&quot;/&quot;, async (req, res) =&gt; {
+  const users = await prisma.user.findMany({
+    where: {
+      orgId: req.user!.orgId
+    },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      createdAt: true,
+      updatedAt: true
+    },
+    orderBy: {
+      createdAt: &quot;desc&quot;
+    }
+  });
+
+  return res.json({
+    users
+  });
+});
+
+usersRouter.post(&quot;/invite&quot;, async (req, res) =&gt; {
+  const schema = z.object({
+    email: z.string().email(),
+    name: z.string().optional(),
+    role: z.nativeEnum(UserRole).default(UserRole.CAMPAIGN_MANAGER),
+    temporaryPassword: z.string().min(8).default(&quot;Temp@1234&quot;)
+  });
+
+  const parsed = schema.safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({
+      message: &quot;Invalid invite payload&quot;,
+      errors: parsed.error.flatten()
+    });
+  }
+
+  const passwordHash = await hashPassword(parsed.data.temporaryPassword);
+
+  const user = await prisma.user.create({
+    data: {
+      email: parsed.data.email,
+      name: parsed.data.name,
+      role: parsed.data.role,
+      passwordHash,
+      orgId: req.user!.orgId
+    },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      orgId: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  });
+
+  return res.status(201).json({
+    user,
+    temporaryPassword: parsed.data.temporaryPassword
+  });
+});
+
+usersRouter.put(&quot;/:id&quot;, async (req, res) =&gt; {
+  const schema = z.object({
+    name: z.string().optional(),
+    role: z.nativeEnum(UserRole).optional()
+  });
+
+  const parsed = schema.safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({
+      message: &quot;Invalid user payload&quot;,
+      errors: parsed.error.flatten()
+    });
+  }
+
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      id: req.params.id,
+      orgId: req.user!.orgId
+    }
+  });
+
+  if (!existingUser) {
+    return res.status(404).json({
+      message: &quot;User not found&quot;
+    });
+  }
+
+  const user = await prisma.user.update({
+    where: {
+      id: existingUser.id
+    },
+    data: parsed.data,
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      orgId: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  });
+
+  return res.json({
+    user
+  });
+});
+
+usersRouter.post(&quot;/:id/deactivate&quot;, async (req, res) =&gt; {
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      id: req.params.id,
+      orgId: req.user!.orgId
+    }
+  });
+
+  if (!existingUser) {
+    return res.status(404).json({
+      message: &quot;User not found&quot;
+    });
+  }
+
+  if (existingUser.id === req.user!.sub) {
+    return res.status(400).json({
+      message: &quot;You cannot deactivate your own user&quot;
+    });
+  }
+
+  await prisma.user.delete({
+    where: {
+      id: existingUser.id
+    }
+  });
+
+  return res.json({
+    message: &quot;User deactivated&quot;
+  });
+});
+</pre>
+
+    <h3>Route Mounting: apps/api/src/index.ts</h3>
+    <pre>import &quot;dotenv/config&quot;;
+import express from &quot;express&quot;;
+import cors from &quot;cors&quot;;
+import { sendEmail } from &quot;./services/mailer.js&quot;;
+import { enqueueSendJob } from &quot;./services/queue.js&quot;;
+import { uploadAsset } from &quot;./services/storage.js&quot;;
+import { authRouter } from &quot;./routes/auth.js&quot;;
+import { profileRouter } from &quot;./routes/profile.js&quot;;
+import { usersRouter } from &quot;./routes/users.js&quot;;
+
+
+const app = express();
+
+const port = Number(process.env.API_PORT ?? 4000);
+const webOrigin = process.env.WEB_ORIGIN ?? &quot;http://localhost:5173&quot;;
+
+app.use(cors({ origin: webOrigin }));
+app.use(express.json());
+app.use(&quot;/api/auth&quot;, authRouter);
+app.use(&quot;/api/profile&quot;, profileRouter);
+app.use(&quot;/api/users&quot;, usersRouter);
+
+app.get(&quot;/&quot;, (_req, res) =&gt; {
+  res.json({
+    message: &quot;Email Campaign Platform API&quot;,
+    health: &quot;/health&quot;
+  });
+});
+
+app.get(&quot;/health&quot;, (_req, res) =&gt; {
+  res.json({
+    status: &quot;ok&quot;,
+    service: &quot;api&quot;
+  });
+});
+
+app.post(&quot;/dev/test-email&quot;, async (_req, res) =&gt; {
+  const result = await sendEmail({
+    to: &quot;test@example.com&quot;,
+    subject: &quot;Dev email test&quot;,
+    html: &quot;&lt;h1&gt;Hello from dev mailer&lt;/h1&gt;&quot;,
+    unsubscribeUrl: &quot;http://localhost:4000/unsubscribe?uid=dev-test&quot;
+  });
+
+  res.json(result);
+});
+
+app.post(&quot;/dev/test-queue&quot;, async (_req, res) =&gt; {
+  const result = await enqueueSendJob({
+    type: &quot;SEND_EMAIL&quot;,
+    campaignId: &quot;dev-campaign&quot;,
+    contactId: &quot;dev-contact&quot;
+  });
+
+  res.json(result);
+});
+
+app.post(&quot;/dev/test-s3&quot;, async (_req, res) =&gt; {
+  const result = await uploadAsset({
+    key: `dev-tests/test-${Date.now()}.txt`,
+    body: Buffer.from(&quot;S3 upload test from Email Campaign Platform&quot;),
+    contentType: &quot;text/plain&quot;
+  });
+
+  res.json(result);
+});
+
+app.listen(port, () =&gt; {
+  console.log(`API running on http://localhost:${port}`);
+});
+</pre>
+
+    <h3>Part E: apps/web/src/main.tsx</h3>
+    <pre>import React, { FormEvent, useMemo, useState } from &quot;react&quot;;
+import { createRoot } from &quot;react-dom/client&quot;;
+import &quot;./styles.css&quot;;
+
+type Role = &quot;SUPER_ADMIN&quot; | &quot;CAMPAIGN_MANAGER&quot; | &quot;VIEWER&quot;;
+
+type User = {
+  id: string;
+  email: string;
+  name: string | null;
+  role: Role;
+  orgId: string;
+};
+
+type AuthState = {
+  accessToken: string;
+  refreshToken: string;
+  user: User;
+};
+
+const API_BASE = &quot;http://localhost:4000&quot;;
+
+const navItems = [
+  { label: &quot;Dashboard&quot;, path: &quot;/&quot;, roles: [&quot;SUPER_ADMIN&quot;, &quot;CAMPAIGN_MANAGER&quot;, &quot;VIEWER&quot;] },
+  { label: &quot;Contacts&quot;, path: &quot;/contacts/lists&quot;, roles: [&quot;SUPER_ADMIN&quot;, &quot;CAMPAIGN_MANAGER&quot;] },
+  { label: &quot;Templates&quot;, path: &quot;/templates&quot;, roles: [&quot;SUPER_ADMIN&quot;, &quot;CAMPAIGN_MANAGER&quot;] },
+  { label: &quot;Campaigns&quot;, path: &quot;/campaigns&quot;, roles: [&quot;SUPER_ADMIN&quot;, &quot;CAMPAIGN_MANAGER&quot;] },
+  { label: &quot;Analytics&quot;, path: &quot;/analytics&quot;, roles: [&quot;SUPER_ADMIN&quot;, &quot;CAMPAIGN_MANAGER&quot;, &quot;VIEWER&quot;] },
+  { label: &quot;Organisation&quot;, path: &quot;/settings/org&quot;, roles: [&quot;SUPER_ADMIN&quot;] },
+  { label: &quot;Users&quot;, path: &quot;/settings/users&quot;, roles: [&quot;SUPER_ADMIN&quot;] },
+  { label: &quot;Profile&quot;, path: &quot;/settings/profile&quot;, roles: [&quot;SUPER_ADMIN&quot;, &quot;CAMPAIGN_MANAGER&quot;, &quot;VIEWER&quot;] }
+] satisfies Array&lt;{ label: string; path: string; roles: Role[] }&gt;;
+
+function App() {
+  const [auth, setAuth] = useState&lt;AuthState | null&gt;(() =&gt; {
+    const saved = localStorage.getItem(&quot;auth&quot;);
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const [route, setRoute] = useState(window.location.pathname);
+
+  function navigate(path: string) {
+    window.history.pushState({}, &quot;&quot;, path);
+    setRoute(path);
+  }
+
+  function saveAuth(next: AuthState) {
+    localStorage.setItem(&quot;auth&quot;, JSON.stringify(next));
+    setAuth(next);
+  }
+
+  function logout() {
+    localStorage.removeItem(&quot;auth&quot;);
+    setAuth(null);
+    navigate(&quot;/login&quot;);
+  }
+
+  if (!auth) {
+    if (route === &quot;/forgot-password&quot;) {
+      return &lt;ForgotPasswordPage onNavigate={navigate} /&gt;;
+    }
+
+    if (route === &quot;/reset-password&quot;) {
+      return &lt;ResetPasswordPage onNavigate={navigate} /&gt;;
+    }
+
+    return &lt;LoginPage onLogin={saveAuth} onNavigate={navigate} /&gt;;
+  }
+
+  return (
+    &lt;Shell auth={auth} route={route} onNavigate={navigate} onLogout={logout}&gt;
+      {route === &quot;/&quot; &amp;&amp; &lt;DashboardPage user={auth.user} /&gt;}
+      {route === &quot;/settings/profile&quot; &amp;&amp; &lt;ProfilePage auth={auth} onAuthChange={saveAuth} /&gt;}
+      {route === &quot;/settings/users&quot; &amp;&amp; &lt;UsersPage auth={auth} /&gt;}
+      {![&quot;/&quot;, &quot;/settings/profile&quot;, &quot;/settings/users&quot;].includes(route) &amp;&amp; (
+        &lt;PlaceholderPage route={route} /&gt;
+      )}
+    &lt;/Shell&gt;
+  );
+}
+
+function LoginPage(props: {
+  onLogin: (auth: AuthState) =&gt; void;
+  onNavigate: (path: string) =&gt; void;
+}) {
+  const [email, setEmail] = useState(&quot;admin@example.com&quot;);
+  const [password, setPassword] = useState(&quot;Admin@123&quot;);
+  const [error, setError] = useState(&quot;&quot;);
+  const [loading, setLoading] = useState(false);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setError(&quot;&quot;);
+    setLoading(true);
+
+    const response = await fetch(`${API_BASE}/api/auth/login`, {
+      method: &quot;POST&quot;,
+      headers: {
+        &quot;Content-Type&quot;: &quot;application/json&quot;
+      },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await response.json();
+    setLoading(false);
+
+    if (!response.ok) {
+      setError(data.message ?? &quot;Login failed&quot;);
+      return;
+    }
+
+    props.onLogin(data);
+    props.onNavigate(&quot;/&quot;);
+  }
+
+  return (
+    &lt;AuthLayout&gt;
+      &lt;form className=&quot;auth-card&quot; onSubmit={submit}&gt;
+        &lt;div className=&quot;brand-mark&quot;&gt;EC&lt;/div&gt;
+        &lt;h1&gt;Email Campaign Platform&lt;/h1&gt;
+        &lt;p className=&quot;muted&quot;&gt;Sign in to manage contacts, templates, campaigns, and reports.&lt;/p&gt;
+
+        &lt;label&gt;
+          Email
+          &lt;input value={email} onChange={(event) =&gt; setEmail(event.target.value)} /&gt;
+        &lt;/label&gt;
+
+        &lt;label&gt;
+          Password
+          &lt;input
+            type=&quot;password&quot;
+            value={password}
+            onChange={(event) =&gt; setPassword(event.target.value)}
+          /&gt;
+        &lt;/label&gt;
+
+        {error &amp;&amp; &lt;p className=&quot;error&quot;&gt;{error}&lt;/p&gt;}
+
+        &lt;button className=&quot;primary-button&quot; disabled={loading}&gt;
+          {loading ? &quot;Signing in...&quot; : &quot;Sign in&quot;}
+        &lt;/button&gt;
+
+        &lt;button
+          className=&quot;link-button&quot;
+          type=&quot;button&quot;
+          onClick={() =&gt; props.onNavigate(&quot;/forgot-password&quot;)}
+        &gt;
+          Forgot password?
+        &lt;/button&gt;
+      &lt;/form&gt;
+    &lt;/AuthLayout&gt;
+  );
+}
+
+function ForgotPasswordPage(props: { onNavigate: (path: string) =&gt; void }) {
+  const [email, setEmail] = useState(&quot;admin@example.com&quot;);
+  const [message, setMessage] = useState(&quot;&quot;);
+  const [token, setToken] = useState(&quot;&quot;);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+
+    const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+      method: &quot;POST&quot;,
+      headers: {
+        &quot;Content-Type&quot;: &quot;application/json&quot;
+      },
+      body: JSON.stringify({ email })
+    });
+
+    const data = await response.json();
+    setMessage(data.message);
+    setToken(data.devResetToken ?? &quot;&quot;);
+  }
+
+  return (
+    &lt;AuthLayout&gt;
+      &lt;form className=&quot;auth-card&quot; onSubmit={submit}&gt;
+        &lt;h1&gt;Reset Password&lt;/h1&gt;
+        &lt;p className=&quot;muted&quot;&gt;Enter your admin email. In development, the reset token is shown here.&lt;/p&gt;
+
+        &lt;label&gt;
+          Email
+          &lt;input value={email} onChange={(event) =&gt; setEmail(event.target.value)} /&gt;
+        &lt;/label&gt;
+
+        &lt;button className=&quot;primary-button&quot;&gt;Send reset link&lt;/button&gt;
+
+        {message &amp;&amp; &lt;p className=&quot;success&quot;&gt;{message}&lt;/p&gt;}
+        {token &amp;&amp; &lt;pre className=&quot;token-box&quot;&gt;{token}&lt;/pre&gt;}
+
+        &lt;button className=&quot;link-button&quot; type=&quot;button&quot; onClick={() =&gt; props.onNavigate(&quot;/login&quot;)}&gt;
+          Back to login
+        &lt;/button&gt;
+      &lt;/form&gt;
+    &lt;/AuthLayout&gt;
+  );
+}
+
+function ResetPasswordPage(props: { onNavigate: (path: string) =&gt; void }) {
+  const initialToken = new URLSearchParams(window.location.search).get(&quot;token&quot;) ?? &quot;&quot;;
+  const [token, setToken] = useState(initialToken);
+  const [password, setPassword] = useState(&quot;Admin@123&quot;);
+  const [message, setMessage] = useState(&quot;&quot;);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+
+    const response = await fetch(`${API_BASE}/api/auth/reset-password`, {
+      method: &quot;POST&quot;,
+      headers: {
+        &quot;Content-Type&quot;: &quot;application/json&quot;
+      },
+      body: JSON.stringify({ token, password })
+    });
+
+    const data = await response.json();
+    setMessage(data.message);
+  }
+
+  return (
+    &lt;AuthLayout&gt;
+      &lt;form className=&quot;auth-card&quot; onSubmit={submit}&gt;
+        &lt;h1&gt;Create New Password&lt;/h1&gt;
+
+        &lt;label&gt;
+          Reset token
+          &lt;input value={token} onChange={(event) =&gt; setToken(event.target.value)} /&gt;
+        &lt;/label&gt;
+
+        &lt;label&gt;
+          New password
+          &lt;input
+            type=&quot;password&quot;
+            value={password}
+            onChange={(event) =&gt; setPassword(event.target.value)}
+          /&gt;
+        &lt;/label&gt;
+
+        &lt;button className=&quot;primary-button&quot;&gt;Reset password&lt;/button&gt;
+
+        {message &amp;&amp; &lt;p className=&quot;success&quot;&gt;{message}&lt;/p&gt;}
+
+        &lt;button className=&quot;link-button&quot; type=&quot;button&quot; onClick={() =&gt; props.onNavigate(&quot;/login&quot;)}&gt;
+          Back to login
+        &lt;/button&gt;
+      &lt;/form&gt;
+    &lt;/AuthLayout&gt;
+  );
+}
+
+function AuthLayout(props: { children: React.ReactNode }) {
+  return (
+    &lt;main className=&quot;auth-page&quot;&gt;
+      &lt;section className=&quot;auth-panel&quot;&gt;
+        &lt;div&gt;
+          &lt;p className=&quot;eyebrow&quot;&gt;Campaign operations&lt;/p&gt;
+          &lt;h2&gt;Build, send, and measure email campaigns from one quiet workspace.&lt;/h2&gt;
+          &lt;p&gt;
+            A focused admin console for teams managing contacts, templates, scheduled sends,
+            compliance, and performance reporting.
+          &lt;/p&gt;
+        &lt;/div&gt;
+      &lt;/section&gt;
+      {props.children}
+    &lt;/main&gt;
+  );
+}
+
+function Shell(props: {
+  auth: AuthState;
+  route: string;
+  children: React.ReactNode;
+  onNavigate: (path: string) =&gt; void;
+  onLogout: () =&gt; void;
+}) {
+  const visibleNav = navItems.filter((item) =&gt; item.roles.includes(props.auth.user.role));
+
+  return (
+    &lt;main className=&quot;app-shell&quot;&gt;
+      &lt;aside className=&quot;sidebar&quot;&gt;
+        &lt;div className=&quot;sidebar-brand&quot;&gt;
+          &lt;span className=&quot;brand-mark small&quot;&gt;EC&lt;/span&gt;
+          &lt;div&gt;
+            &lt;strong&gt;EmailOps&lt;/strong&gt;
+            &lt;span&gt;{props.auth.user.role.replace(&quot;_&quot;, &quot; &quot;)}&lt;/span&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+
+        &lt;nav&gt;
+          {visibleNav.map((item) =&gt; (
+            &lt;button
+              key={item.path}
+              className={props.route === item.path ? &quot;nav-item active&quot; : &quot;nav-item&quot;}
+              onClick={() =&gt; props.onNavigate(item.path)}
+            &gt;
+              {item.label}
+            &lt;/button&gt;
+          ))}
+        &lt;/nav&gt;
+      &lt;/aside&gt;
+
+      &lt;section className=&quot;workspace&quot;&gt;
+        &lt;header className=&quot;topbar&quot;&gt;
+          &lt;div&gt;
+            &lt;p className=&quot;eyebrow&quot;&gt;Admin console&lt;/p&gt;
+            &lt;h1&gt;{getPageTitle(props.route)}&lt;/h1&gt;
+          &lt;/div&gt;
+
+          &lt;div className=&quot;user-chip&quot;&gt;
+            &lt;span&gt;{props.auth.user.name ?? props.auth.user.email}&lt;/span&gt;
+            &lt;button onClick={props.onLogout}&gt;Logout&lt;/button&gt;
+          &lt;/div&gt;
+        &lt;/header&gt;
+
+        &lt;section className=&quot;content&quot;&gt;{props.children}&lt;/section&gt;
+      &lt;/section&gt;
+    &lt;/main&gt;
+  );
+}
+
+function DashboardPage(props: { user: User }) {
+  const cards = [
+    [&quot;Total Contacts&quot;, &quot;3&quot;, &quot;+ seeded demo&quot;],
+    [&quot;Emails Sent&quot;, &quot;0&quot;, &quot;ready for sending&quot;],
+    [&quot;Open Rate&quot;, &quot;0%&quot;, &quot;tracking later&quot;],
+    [&quot;Click Rate&quot;, &quot;0%&quot;, &quot;tracking later&quot;]
+  ];
+
+  return (
+    &lt;&gt;
+      &lt;div className=&quot;welcome-strip&quot;&gt;
+        &lt;div&gt;
+          &lt;h2&gt;Welcome, {props.user.name ?? props.user.email}&lt;/h2&gt;
+          &lt;p&gt;M1 is active: authentication, roles, profile, and user management.&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;span className=&quot;status-pill&quot;&gt;{props.user.role}&lt;/span&gt;
+      &lt;/div&gt;
+
+      &lt;div className=&quot;metric-grid&quot;&gt;
+        {cards.map(([label, value, hint]) =&gt; (
+          &lt;article className=&quot;metric-card&quot; key={label}&gt;
+            &lt;span&gt;{label}&lt;/span&gt;
+            &lt;strong&gt;{value}&lt;/strong&gt;
+            &lt;small&gt;{hint}&lt;/small&gt;
+          &lt;/article&gt;
+        ))}
+      &lt;/div&gt;
+
+      &lt;section className=&quot;panel&quot;&gt;
+        &lt;h2&gt;Recent Activity&lt;/h2&gt;
+        &lt;div className=&quot;activity-row&quot;&gt;Admin login and user role setup are ready.&lt;/div&gt;
+        &lt;div className=&quot;activity-row&quot;&gt;Contacts, templates, campaigns, and reports are protected placeholders.&lt;/div&gt;
+      &lt;/section&gt;
+    &lt;/&gt;
+  );
+}
+
+function ProfilePage(props: { auth: AuthState; onAuthChange: (auth: AuthState) =&gt; void }) {
+  const [name, setName] = useState(props.auth.user.name ?? &quot;&quot;);
+  const [email, setEmail] = useState(props.auth.user.email);
+  const [currentPassword, setCurrentPassword] = useState(&quot;&quot;);
+  const [newPassword, setNewPassword] = useState(&quot;&quot;);
+  const [message, setMessage] = useState(&quot;&quot;);
+
+  async function updateProfile(event: FormEvent) {
+    event.preventDefault();
+
+    const response = await fetch(`${API_BASE}/api/profile`, {
+      method: &quot;PUT&quot;,
+      headers: authHeaders(props.auth.accessToken),
+      body: JSON.stringify({ name, email })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      props.onAuthChange({
+        ...props.auth,
+        user: data.user
+      });
+    }
+
+    setMessage(response.ok ? &quot;Profile updated&quot; : data.message);
+  }
+
+  async function updatePassword(event: FormEvent) {
+    event.preventDefault();
+
+    const response = await fetch(`${API_BASE}/api/profile/password`, {
+      method: &quot;PUT&quot;,
+      headers: authHeaders(props.auth.accessToken),
+      body: JSON.stringify({ currentPassword, newPassword })
+    });
+
+    const data = await response.json();
+    setMessage(response.ok ? &quot;Password updated&quot; : data.message);
+  }
+
+  return (
+    &lt;div className=&quot;two-column&quot;&gt;
+      &lt;form className=&quot;panel form-panel&quot; onSubmit={updateProfile}&gt;
+        &lt;h2&gt;Profile&lt;/h2&gt;
+
+        &lt;label&gt;
+          Name
+          &lt;input value={name} onChange={(event) =&gt; setName(event.target.value)} /&gt;
+        &lt;/label&gt;
+
+        &lt;label&gt;
+          Email
+          &lt;input value={email} onChange={(event) =&gt; setEmail(event.target.value)} /&gt;
+        &lt;/label&gt;
+
+        &lt;button className=&quot;primary-button&quot;&gt;Save profile&lt;/button&gt;
+      &lt;/form&gt;
+
+      &lt;form className=&quot;panel form-panel&quot; onSubmit={updatePassword}&gt;
+        &lt;h2&gt;Password&lt;/h2&gt;
+
+        &lt;label&gt;
+          Current password
+          &lt;input
+            type=&quot;password&quot;
+            value={currentPassword}
+            onChange={(event) =&gt; setCurrentPassword(event.target.value)}
+          /&gt;
+        &lt;/label&gt;
+
+        &lt;label&gt;
+          New password
+          &lt;input
+            type=&quot;password&quot;
+            value={newPassword}
+            onChange={(event) =&gt; setNewPassword(event.target.value)}
+          /&gt;
+        &lt;/label&gt;
+
+        &lt;button className=&quot;primary-button&quot;&gt;Update password&lt;/button&gt;
+
+        {message &amp;&amp; &lt;p className=&quot;success&quot;&gt;{message}&lt;/p&gt;}
+      &lt;/form&gt;
+    &lt;/div&gt;
+  );
+}
+
+function UsersPage(props: { auth: AuthState }) {
+  const [users, setUsers] = useState&lt;User[]&gt;([]);
+  const [email, setEmail] = useState(&quot;newuser@example.com&quot;);
+  const [name, setName] = useState(&quot;New User&quot;);
+  const [role, setRole] = useState&lt;Role&gt;(&quot;CAMPAIGN_MANAGER&quot;);
+  const [temporaryPassword, setTemporaryPassword] = useState(&quot;Temp@1234&quot;);
+  const [message, setMessage] = useState(&quot;&quot;);
+
+  async function loadUsers() {
+    const response = await fetch(`${API_BASE}/api/users`, {
+      headers: {
+        Authorization: `Bearer ${props.auth.accessToken}`
+      }
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      setUsers(data.users);
+    } else {
+      setMessage(data.message);
+    }
+  }
+
+  async function inviteUser(event: FormEvent) {
+    event.preventDefault();
+
+    const response = await fetch(`${API_BASE}/api/users/invite`, {
+      method: &quot;POST&quot;,
+      headers: authHeaders(props.auth.accessToken),
+      body: JSON.stringify({ email, name, role, temporaryPassword })
+    });
+
+    const data = await response.json();
+    setMessage(response.ok ? `Invited ${data.user.email}` : data.message);
+    await loadUsers();
+  }
+
+  React.useEffect(() =&gt; {
+    void loadUsers();
+  }, []);
+
+  return (
+    &lt;div className=&quot;two-column users-layout&quot;&gt;
+      &lt;section className=&quot;panel&quot;&gt;
+        &lt;div className=&quot;panel-header&quot;&gt;
+          &lt;h2&gt;Users&lt;/h2&gt;
+          &lt;button onClick={loadUsers}&gt;Refresh&lt;/button&gt;
+        &lt;/div&gt;
+
+        &lt;div className=&quot;table&quot;&gt;
+          &lt;div className=&quot;table-head&quot;&gt;
+            &lt;span&gt;Name&lt;/span&gt;
+            &lt;span&gt;Email&lt;/span&gt;
+            &lt;span&gt;Role&lt;/span&gt;
+          &lt;/div&gt;
+          {users.map((user) =&gt; (
+            &lt;div className=&quot;table-row&quot; key={user.id}&gt;
+              &lt;span&gt;{user.name ?? &quot;-&quot;}&lt;/span&gt;
+              &lt;span&gt;{user.email}&lt;/span&gt;
+              &lt;span&gt;{user.role}&lt;/span&gt;
+            &lt;/div&gt;
+          ))}
+        &lt;/div&gt;
+      &lt;/section&gt;
+
+      &lt;form className=&quot;panel form-panel&quot; onSubmit={inviteUser}&gt;
+        &lt;h2&gt;Invite User&lt;/h2&gt;
+
+        &lt;label&gt;
+          Name
+          &lt;input value={name} onChange={(event) =&gt; setName(event.target.value)} /&gt;
+        &lt;/label&gt;
+
+        &lt;label&gt;
+          Email
+          &lt;input value={email} onChange={(event) =&gt; setEmail(event.target.value)} /&gt;
+        &lt;/label&gt;
+
+        &lt;label&gt;
+          Role
+          &lt;select value={role} onChange={(event) =&gt; setRole(event.target.value as Role)}&gt;
+            &lt;option value=&quot;SUPER_ADMIN&quot;&gt;Super Admin&lt;/option&gt;
+            &lt;option value=&quot;CAMPAIGN_MANAGER&quot;&gt;Campaign Manager&lt;/option&gt;
+            &lt;option value=&quot;VIEWER&quot;&gt;Viewer&lt;/option&gt;
+          &lt;/select&gt;
+        &lt;/label&gt;
+
+        &lt;label&gt;
+          Temporary password
+          &lt;input
+            value={temporaryPassword}
+            onChange={(event) =&gt; setTemporaryPassword(event.target.value)}
+          /&gt;
+        &lt;/label&gt;
+
+        &lt;button className=&quot;primary-button&quot;&gt;Invite teammate&lt;/button&gt;
+        {message &amp;&amp; &lt;p className=&quot;success&quot;&gt;{message}&lt;/p&gt;}
+      &lt;/form&gt;
+    &lt;/div&gt;
+  );
+}
+
+function PlaceholderPage(props: { route: string }) {
+  return (
+    &lt;section className=&quot;panel&quot;&gt;
+      &lt;h2&gt;{getPageTitle(props.route)}&lt;/h2&gt;
+      &lt;p className=&quot;muted&quot;&gt;Protected placeholder screen. Full module implementation comes next.&lt;/p&gt;
+    &lt;/section&gt;
+  );
+}
+
+function getPageTitle(route: string) {
+  const item = navItems.find((nav) =&gt; nav.path === route);
+
+  if (item) {
+    return item.label;
+  }
+
+  return &quot;Workspace&quot;;
+}
+
+function authHeaders(token: string) {
+  return {
+    &quot;Content-Type&quot;: &quot;application/json&quot;,
+    Authorization: `Bearer ${token}`
+  };
+}
+
+createRoot(document.getElementById(&quot;root&quot;)!).render(
+  &lt;React.StrictMode&gt;
+    &lt;App /&gt;
+  &lt;/React.StrictMode&gt;
+);
+</pre>
+
+    <h3>Part E: apps/web/src/styles.css</h3>
+    <pre>:root {
+  font-family: Inter, &quot;Segoe UI&quot;, Arial, sans-serif;
+  color: #1f2937;
+  background: #f4f6f8;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) 420px;
+  background: #eef2f7;
+}
+
+.auth-panel {
+  display: flex;
+  align-items: flex-end;
+  padding: 48px;
+  color: #f8fafc;
+  background:
+    linear-gradient(rgba(17, 24, 39, 0.78), rgba(17, 24, 39, 0.78)),
+    url(&quot;https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&amp;fit=crop&amp;w=1600&amp;q=80&quot;);
+  background-size: cover;
+  background-position: center;
+}
+
+.auth-panel h2 {
+  max-width: 680px;
+  margin: 0 0 12px;
+  font-size: 40px;
+  line-height: 1.08;
+}
+
+.auth-panel p {
+  max-width: 620px;
+  color: #dbeafe;
+}
+
+.auth-card {
+  align-self: center;
+  width: min(100%, 420px);
+  margin: auto;
+  padding: 32px;
+  background: #ffffff;
+  border-left: 1px solid #d8dee9;
+}
+
+.auth-card h1 {
+  margin: 18px 0 8px;
+  font-size: 26px;
+}
+
+.brand-mark {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  background: #155eef;
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.brand-mark.small {
+  width: 36px;
+  height: 36px;
+  font-size: 13px;
+}
+
+label {
+  display: grid;
+  gap: 7px;
+  margin: 16px 0;
+  color: #4b5563;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  color: #111827;
+  background: #ffffff;
+  border: 1px solid #cfd7e3;
+  border-radius: 6px;
+  outline: none;
+}
+
+input:focus,
+select:focus {
+  border-color: #155eef;
+  box-shadow: 0 0 0 3px rgba(21, 94, 239, 0.13);
+}
+
+.primary-button {
+  min-height: 42px;
+  padding: 10px 16px;
+  color: #ffffff;
+  background: #155eef;
+  border: 0;
+  border-radius: 6px;
+  font-weight: 750;
+}
+
+.primary-button:disabled {
+  opacity: 0.7;
+}
+
+.link-button {
+  margin-top: 14px;
+  padding: 0;
+  color: #155eef;
+  background: transparent;
+  border: 0;
+  font-weight: 650;
+}
+
+.error {
+  padding: 10px 12px;
+  color: #991b1b;
+  background: #fee2e2;
+  border-radius: 6px;
+}
+
+.success {
+  padding: 10px 12px;
+  color: #065f46;
+  background: #d1fae5;
+  border-radius: 6px;
+}
+
+.muted {
+  color: #64748b;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: #155eef;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.token-box {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 12px;
+  color: #d1fae5;
+  background: #111827;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 18px;
+  color: #cbd5e1;
+  background: #111827;
+}
+
+.sidebar-brand {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #263244;
+}
+
+.sidebar-brand strong {
+  display: block;
+  color: #ffffff;
+}
+
+.sidebar-brand span:last-child {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.sidebar nav {
+  display: grid;
+  gap: 6px;
+  margin-top: 18px;
+}
+
+.nav-item {
+  min-height: 40px;
+  padding: 10px 12px;
+  color: #cbd5e1;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  color: #ffffff;
+  background: #1f2a3d;
+}
+
+.workspace {
+  min-width: 0;
+}
+
+.topbar {
+  min-height: 74px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #d8dee9;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.user-chip {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.user-chip span {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-chip button,
+.panel-header button {
+  min-height: 36px;
+  padding: 8px 12px;
+  color: #334155;
+  background: #f8fafc;
+  border: 1px solid #cfd7e3;
+  border-radius: 6px;
+}
+
+.content {
+  padding: 24px;
+}
+
+.welcome-strip,
+.panel,
+.metric-card {
+  background: #ffffff;
+  border: 1px solid #d8dee9;
+  border-radius: 8px;
+}
+
+.welcome-strip {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px;
+}
+
+.welcome-strip h2 {
+  margin: 0 0 4px;
+}
+
+.welcome-strip p {
+  margin: 0;
+  color: #64748b;
+}
+
+.status-pill {
+  padding: 7px 10px;
+  color: #155eef;
+  background: #e0ecff;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 16px 0;
+}
+
+.metric-card {
+  padding: 18px;
+}
+
+.metric-card span {
+  display: block;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.metric-card strong {
+  display: block;
+  margin: 8px 0 4px;
+  color: #111827;
+  font-size: 28px;
+}
+
+.metric-card small {
+  color: #64748b;
+}
+
+.panel {
+  padding: 20px;
+}
+
+.panel h2 {
+  margin: 0 0 14px;
+}
+
+.activity-row {
+  padding: 12px 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+.two-column {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.users-layout {
+  grid-template-columns: 1.4fr 0.8fr;
+}
+
+.form-panel {
+  align-self: start;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.table {
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.table-head,
+.table-row {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1fr;
+  min-width: 620px;
+}
+
+.table-head {
+  color: #475569;
+  background: #f8fafc;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.table-head span,
+.table-row span {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table-row:last-child span {
+  border-bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .auth-page {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-panel {
+    min-height: 280px;
+    padding: 28px;
+  }
+
+  .auth-panel h2 {
+    font-size: 30px;
+  }
+
+  .auth-card {
+    width: 100%;
+    min-height: auto;
+    border-left: 0;
+  }
+
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+    height: auto;
+  }
+
+  .sidebar nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .metric-grid,
+  .two-column,
+  .users-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .content {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 520px) {
+  .sidebar nav {
+    grid-template-columns: 1fr;
+  }
+
+  .welcome-strip,
+  .user-chip {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .auth-card {
+    padding: 24px 18px;
+  }
+
+  .metric-card strong {
+    font-size: 24px;
+  }
+}
+</pre>
+  </body>
+</html>

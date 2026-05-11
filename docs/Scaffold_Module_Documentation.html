@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Scaffold Module Documentation</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 18mm 16mm;
+      }
+
+      :root {
+        --navy: #172033;
+        --blue: #1f5eff;
+        --teal: #009b8f;
+        --amber: #d88700;
+        --rose: #c2415a;
+        --ink: #222836;
+        --muted: #687386;
+        --line: #d8dee9;
+        --panel: #f5f7fb;
+        --code: #111827;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: "Segoe UI", Arial, sans-serif;
+        font-size: 10.5pt;
+        line-height: 1.5;
+        background: #ffffff;
+      }
+
+      .cover {
+        padding: 34px 38px;
+        color: white;
+        background: linear-gradient(135deg, var(--navy), #263d72);
+        border-radius: 12px;
+        margin-bottom: 28px;
+      }
+
+      .eyebrow {
+        margin: 0 0 16px;
+        color: #a9d8ff;
+        font-size: 9pt;
+        font-weight: 700;
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 30pt;
+        line-height: 1.08;
+      }
+
+      .subtitle {
+        max-width: 650px;
+        margin: 0;
+        color: #dbeafe;
+        font-size: 12pt;
+      }
+
+      .meta {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 28px;
+      }
+
+      .meta div {
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.11);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 8px;
+      }
+
+      .meta strong {
+        display: block;
+        color: #ffffff;
+        font-size: 8.5pt;
+        text-transform: uppercase;
+      }
+
+      h2 {
+        margin: 26px 0 10px;
+        padding-bottom: 7px;
+        color: var(--navy);
+        border-bottom: 2px solid var(--line);
+        font-size: 16pt;
+      }
+
+      h3 {
+        margin: 18px 0 8px;
+        color: #24324d;
+        font-size: 12.5pt;
+      }
+
+      p {
+        margin: 7px 0;
+      }
+
+      .callout {
+        padding: 12px 14px;
+        margin: 12px 0;
+        background: var(--panel);
+        border-left: 5px solid var(--blue);
+        border-radius: 8px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin: 12px 0;
+      }
+
+      .card {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-top: 5px solid var(--teal);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .card:nth-child(2) {
+        border-top-color: var(--blue);
+      }
+
+      .card:nth-child(3) {
+        border-top-color: var(--amber);
+      }
+
+      .card h3 {
+        margin-top: 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+      }
+
+      th {
+        color: white;
+        background: var(--navy);
+        text-align: left;
+      }
+
+      th,
+      td {
+        padding: 9px 10px;
+        border: 1px solid var(--line);
+        vertical-align: top;
+      }
+
+      tr:nth-child(even) td {
+        background: #f8fafc;
+      }
+
+      code,
+      pre {
+        font-family: Consolas, "Courier New", monospace;
+      }
+
+      pre {
+        white-space: pre-wrap;
+        margin: 10px 0 14px;
+        padding: 12px 14px;
+        color: #e5e7eb;
+        background: var(--code);
+        border-radius: 8px;
+        font-size: 9.2pt;
+        line-height: 1.45;
+      }
+
+      .status {
+        display: inline-block;
+        padding: 5px 10px;
+        color: white;
+        background: var(--teal);
+        border-radius: 999px;
+        font-size: 9pt;
+        font-weight: 700;
+      }
+
+      .issue {
+        border-left-color: var(--rose);
+      }
+
+      .next {
+        border-left-color: var(--amber);
+      }
+    </style>
+  </head>
+  <body>
+    <section class="cover">
+      <p class="eyebrow">Email Campaign Platform</p>
+      <h1>Scaffold Module Documentation</h1>
+      <p class="subtitle">Business-style build record for the initial monorepo setup, including API, Web, Worker, commands, validation outputs, and completion status.</p>
+      <div class="meta">
+        <div><strong>Time Block</strong>10:00 AM - 10:45 AM</div>
+        <div><strong>Module</strong>Scaffold</div>
+        <div><strong>Status</strong>Complete</div>
+      </div>
+    </section>
+
+    <h2>Objective</h2>
+    <div class="callout">
+      Set up the base monorepo structure for the Email Campaign Platform and confirm that the API, Web, and Worker apps can typecheck, build, and run independently.
+    </div>
+
+    <h2>Project Structure</h2>
+    <pre>email-campaign-platform/
+  apps/
+    api/
+      src/index.ts
+      package.json
+      tsconfig.json
+    web/
+      src/main.tsx
+      index.html
+      package.json
+      tsconfig.json
+      vite.config.ts
+    worker/
+      src/index.ts
+      package.json
+      tsconfig.json
+  prisma/schema.prisma
+  .env.example
+  package.json
+  pnpm-workspace.yaml</pre>
+
+    <div class="grid">
+      <div class="card">
+        <h3>API App</h3>
+        <p>Backend REST API using Node.js, Express, TypeScript, and future Prisma integration.</p>
+      </div>
+      <div class="card">
+        <h3>Web App</h3>
+        <p>React and Vite frontend for admin screens and future public subscriber screens.</p>
+      </div>
+      <div class="card">
+        <h3>Worker App</h3>
+        <p>Background worker for scheduled sends, imports, AWS SQS processing, and SES events.</p>
+      </div>
+    </div>
+
+    <h2>Root Workspace Setup</h2>
+    <p>The root workspace controls all package-level commands.</p>
+    <pre>{
+  "dev": "pnpm -r --parallel dev",
+  "build": "pnpm -r build",
+  "lint": "pnpm -r lint",
+  "typecheck": "pnpm -r typecheck",
+  "db:generate": "pnpm --filter api prisma:generate",
+  "db:migrate": "pnpm --filter api prisma:migrate",
+  "db:seed": "pnpm --filter api prisma:seed",
+  "db:studio": "pnpm --filter api prisma:studio"
+}</pre>
+    <pre>packages:
+  - "apps/*"
+  - "packages/*"</pre>
+
+    <h2>API Scaffold</h2>
+    <table>
+      <tr><th>Item</th><th>Details</th></tr>
+      <tr><td>Location</td><td><code>apps/api</code></td></tr>
+      <tr><td>Files</td><td><code>package.json</code>, <code>tsconfig.json</code>, <code>src/index.ts</code></td></tr>
+      <tr><td>Runtime</td><td>Node.js, Express, TypeScript</td></tr>
+      <tr><td>Purpose</td><td>Backend routes, auth, database access, campaign management, tracking, analytics, AWS webhooks.</td></tr>
+    </table>
+    <h3>API Commands</h3>
+    <pre>pnpm --filter api typecheck
+pnpm --filter api build
+pnpm --filter api dev</pre>
+    <h3>Health Route</h3>
+    <pre>GET http://localhost:4000/health
+
+{
+  "status": "ok",
+  "service": "api"
+}</pre>
+    <p>Note: <code>http://localhost:4000/</code> can show <code>Cannot GET /</code> at scaffold stage because only <code>/health</code> exists.</p>
+
+    <h2>Web Scaffold</h2>
+    <table>
+      <tr><th>Item</th><th>Details</th></tr>
+      <tr><td>Location</td><td><code>apps/web</code></td></tr>
+      <tr><td>Files</td><td><code>package.json</code>, <code>tsconfig.json</code>, <code>vite.config.ts</code>, <code>index.html</code>, <code>src/main.tsx</code></td></tr>
+      <tr><td>Runtime</td><td>React, Vite, TypeScript</td></tr>
+      <tr><td>Purpose</td><td>Admin dashboard and public subscriber-facing pages.</td></tr>
+    </table>
+    <h3>Web Commands</h3>
+    <pre>pnpm --filter web typecheck
+pnpm --filter web build
+pnpm --filter web dev</pre>
+    <h3>Successful Build Output</h3>
+    <pre>vite v6.4.2 building for production...
+27 modules transformed.
+dist/index.html                  0.35 kB
+dist/assets/index-DVZ-duwc.js  194.77 kB
+built in 779ms</pre>
+    <p>Expected browser URL: <code>http://localhost:5173/</code></p>
+
+    <h2>Worker Scaffold</h2>
+    <table>
+      <tr><th>Item</th><th>Details</th></tr>
+      <tr><td>Location</td><td><code>apps/worker</code></td></tr>
+      <tr><td>Files</td><td><code>package.json</code>, <code>tsconfig.json</code>, <code>src/index.ts</code></td></tr>
+      <tr><td>Runtime</td><td>Node.js, TypeScript</td></tr>
+      <tr><td>Purpose</td><td>Scheduled sending, CSV imports, SQS jobs, SES event processing, bounce and complaint handling.</td></tr>
+    </table>
+    <h3>Worker Commands</h3>
+    <pre>pnpm --filter worker typecheck
+pnpm --filter worker build
+pnpm --filter worker dev</pre>
+    <h3>Expected Output</h3>
+    <pre>Worker scaffold running.
+Worker heartbeat</pre>
+
+    <h2>Issues Found and Resolved</h2>
+    <div class="callout issue">
+      <strong>Empty API package file:</strong> fixed <code>[ERR_PNPM_JSON_PARSE]</code> by adding a valid <code>apps/api/package.json</code>.
+    </div>
+    <div class="callout issue">
+      <strong>Empty Web package file:</strong> fixed <code>[ERR_PNPM_JSON_PARSE]</code> by adding a valid <code>apps/web/package.json</code>.
+    </div>
+    <div class="callout issue">
+      <strong>Invalid Vite config:</strong> fixed <code>config must export or return an object</code> by exporting <code>defineConfig</code>.
+    </div>
+
+    <h2>Final Verification</h2>
+    <h3>Root Typecheck</h3>
+    <pre>pnpm typecheck
+
+apps/api typecheck completed
+apps/web typecheck completed
+apps/worker typecheck completed</pre>
+    <h3>Root Build</h3>
+    <pre>pnpm build
+
+apps/web build completed
+apps/api build completed
+apps/worker build completed</pre>
+
+    <h2>Completion Status</h2>
+    <p><span class="status">Scaffold Module Complete</span></p>
+    <p>Root workspace configured, API app scaffolded, Web app scaffolded, Worker app scaffolded, TypeScript configured, Vite configured, Express server configured, worker process configured, all apps typecheck successfully, and all apps build successfully.</p>
+
+    <h2>Code Appendix</h2>
+    <p>This appendix contains the complete scaffold code used in the module.</p>
+
+    <h3>Root: package.json</h3>
+    <pre>{
+  "name": "email-campaign-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "In-house email campaign platform",
+  "type": "module",
+  "packageManager": "pnpm@11.0.9",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "clean": "node -e \"const fs=require('fs'); for (const p of ['node_modules','.turbo']) fs.rmSync(p,{recursive:true,force:true});\"",
+    "db:generate": "pnpm --filter api prisma:generate",
+    "db:migrate": "pnpm --filter api prisma:migrate",
+    "db:seed": "pnpm --filter api prisma:seed",
+    "db:studio": "pnpm --filter api prisma:studio"
+  }
+}</pre>
+
+    <h3>Root: pnpm-workspace.yaml</h3>
+    <pre>packages:
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  '@prisma/client': true
+  '@prisma/engines': true
+  esbuild: true
+  prisma: true</pre>
+
+    <h3>API: apps/api/package.json</h3>
+    <pre>{
+  "name": "api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "echo \"lint api\"",
+    "prisma:generate": "prisma generate --schema ../../prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema ../../prisma/schema.prisma",
+    "prisma:seed": "tsx src/seed.ts",
+    "prisma:studio": "prisma studio --schema ../../prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.7.0",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/node": "^22.15.17",
+    "prisma": "^6.7.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}</pre>
+
+    <h3>API: apps/api/tsconfig.json</h3>
+    <pre>{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": "src",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "types": ["node"]
+  },
+  "include": ["src"]
+}</pre>
+
+    <h3>API: apps/api/src/index.ts</h3>
+    <pre>import "dotenv/config";
+import express from "express";
+import cors from "cors";
+
+const app = express();
+
+const port = Number(process.env.API_PORT ?? 4000);
+const webOrigin = process.env.WEB_ORIGIN ?? "http://localhost:5173";
+
+app.use(cors({ origin: webOrigin }));
+app.use(express.json());
+
+app.get("/", (_req, res) =&gt; {
+  res.json({
+    message: "Email Campaign Platform API",
+    health: "/health"
+  });
+});
+
+app.get("/health", (_req, res) =&gt; {
+  res.json({
+    status: "ok",
+    service: "api"
+  });
+});
+
+app.listen(port, () =&gt; {
+  console.log(`API running on http://localhost:${port}`);
+});</pre>
+
+    <h3>Web: apps/web/package.json</h3>
+    <pre>{
+  "name": "web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5173",
+    "build": "tsc -p tsconfig.json && vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 5173",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "echo \"lint web\""
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.4.1",
+    "vite": "^6.3.5",
+    "typescript": "^5.8.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.3",
+    "@types/react-dom": "^19.1.3"
+  }
+}</pre>
+
+    <h3>Web: apps/web/tsconfig.json</h3>
+    <pre>{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src", "vite.config.ts"]
+}</pre>
+
+    <h3>Web: apps/web/vite.config.ts</h3>
+    <pre>import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({
+  plugins: [react()]
+});</pre>
+
+    <h3>Web: apps/web/index.html</h3>
+    <pre>&lt;!doctype html&gt;
+&lt;html lang="en"&gt;
+  &lt;head&gt;
+    &lt;meta charset="UTF-8" /&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0" /&gt;
+    &lt;title&gt;Email Campaign Platform&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;div id="root"&gt;&lt;/div&gt;
+    &lt;script type="module" src="/src/main.tsx"&gt;&lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</pre>
+
+    <h3>Web: apps/web/src/main.tsx</h3>
+    <pre>import React from "react";
+import { createRoot } from "react-dom/client";
+
+function App() {
+  return (
+    &lt;main&gt;
+      &lt;h1&gt;Email Campaign Platform&lt;/h1&gt;
+      &lt;p&gt;Web app scaffold is running.&lt;/p&gt;
+    &lt;/main&gt;
+  );
+}
+
+createRoot(document.getElementById("root")!).render(
+  &lt;React.StrictMode&gt;
+    &lt;App /&gt;
+  &lt;/React.StrictMode&gt;
+);</pre>
+
+    <h3>Worker: apps/worker/package.json</h3>
+    <pre>{
+  "name": "worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "echo \"lint worker\""
+  },
+  "dependencies": {
+    "@prisma/client": "^6.7.0",
+    "dotenv": "^16.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.17",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}</pre>
+
+    <h3>Worker: apps/worker/tsconfig.json</h3>
+    <pre>{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": "src",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["src"]
+}</pre>
+
+    <h3>Worker: apps/worker/src/index.ts</h3>
+    <pre>import "dotenv/config";
+
+console.log("Worker scaffold running.");
+
+setInterval(() =&gt; {
+  console.log("Worker heartbeat");
+}, 30_000);</pre>
+
+    <h2>Next Module</h2>
+    <div class="callout next">
+      <strong>Database Module:</strong> finalize Prisma schema, generate Prisma client, create database migration, add seed script, seed organisation, seed super admin user, seed five starter templates, seed sample contact list, and seed sample contacts.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,880 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Database Module Documentation</title>
+    <style>
+      @page { size: A4; margin: 18mm 16mm; }
+      :root {
+        --navy: #172033;
+        --blue: #1f5eff;
+        --teal: #009b8f;
+        --amber: #d88700;
+        --rose: #c2415a;
+        --green: #16835f;
+        --ink: #222836;
+        --muted: #687386;
+        --line: #d8dee9;
+        --panel: #f5f7fb;
+        --code: #111827;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: "Segoe UI", Arial, sans-serif;
+        font-size: 10.5pt;
+        line-height: 1.5;
+        background: #ffffff;
+      }
+      .cover {
+        padding: 34px 38px;
+        color: white;
+        background: linear-gradient(135deg, var(--navy), #1d5f67);
+        border-radius: 12px;
+        margin-bottom: 28px;
+      }
+      .eyebrow {
+        margin: 0 0 16px;
+        color: #9be7d8;
+        font-size: 9pt;
+        font-weight: 700;
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 30pt;
+        line-height: 1.08;
+      }
+      .subtitle {
+        max-width: 680px;
+        margin: 0;
+        color: #dcfce7;
+        font-size: 12pt;
+      }
+      .meta {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 28px;
+      }
+      .meta div {
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.11);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 8px;
+      }
+      .meta strong {
+        display: block;
+        color: #ffffff;
+        font-size: 8.5pt;
+        text-transform: uppercase;
+      }
+      h2 {
+        margin: 26px 0 10px;
+        padding-bottom: 7px;
+        color: var(--navy);
+        border-bottom: 2px solid var(--line);
+        font-size: 16pt;
+      }
+      h3 {
+        margin: 18px 0 8px;
+        color: #24324d;
+        font-size: 12.5pt;
+      }
+      p { margin: 7px 0; }
+      .callout {
+        padding: 12px 14px;
+        margin: 12px 0;
+        background: var(--panel);
+        border-left: 5px solid var(--blue);
+        border-radius: 8px;
+      }
+      .success { border-left-color: var(--green); }
+      .warning { border-left-color: var(--amber); }
+      .issue { border-left-color: var(--rose); }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin: 12px 0;
+      }
+      .card {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-top: 5px solid var(--teal);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+      .card:nth-child(2) { border-top-color: var(--blue); }
+      .card:nth-child(3) { border-top-color: var(--amber); }
+      .card h3 { margin-top: 0; }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+      }
+      th {
+        color: white;
+        background: var(--navy);
+        text-align: left;
+      }
+      th, td {
+        padding: 9px 10px;
+        border: 1px solid var(--line);
+        vertical-align: top;
+      }
+      tr:nth-child(even) td { background: #f8fafc; }
+      code, pre { font-family: Consolas, "Courier New", monospace; }
+      pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        margin: 10px 0 14px;
+        padding: 12px 14px;
+        color: #e5e7eb;
+        background: var(--code);
+        border-radius: 8px;
+        font-size: 8.6pt;
+        line-height: 1.42;
+      }
+      .status {
+        display: inline-block;
+        padding: 5px 10px;
+        color: white;
+        background: var(--green);
+        border-radius: 999px;
+        font-size: 9pt;
+        font-weight: 700;
+      }
+      .page-break { page-break-before: always; }
+    </style>
+  </head>
+  <body>
+    <section class="cover">
+      <p class="eyebrow">Email Campaign Platform</p>
+      <h1>Database Module Documentation</h1>
+      <p class="subtitle">Business-style build record for PostgreSQL, Prisma schema generation, migration, seed data, troubleshooting, and validation outputs.</p>
+      <div class="meta">
+        <div><strong>Time Block</strong>10:45 AM - 11:45 AM</div>
+        <div><strong>Module</strong>Database</div>
+        <div><strong>Status</strong>Complete</div>
+      </div>
+    </section>
+
+    <h2>Objective</h2>
+    <div class="callout">
+      Configure the project database layer so the platform has a PostgreSQL database, a Prisma data model, generated Prisma Client, applied schema migration, and demo seed data for the next modules.
+    </div>
+
+    <h2>Why This Module Matters</h2>
+    <div class="grid">
+      <div class="card"><h3>Persistent Data</h3><p>Contacts, templates, campaigns, events, suppressions, users, and organisations all require a relational database.</p></div>
+      <div class="card"><h3>Prisma Access</h3><p>Prisma Client gives the API and worker type-safe database access for future modules.</p></div>
+      <div class="card"><h3>Demo Readiness</h3><p>Seed data gives the app a super admin, contacts, templates, segment, and campaign draft for testing.</p></div>
+    </div>
+
+    <h2>Database Stack</h2>
+    <table>
+      <tr><th>Item</th><th>Selected Setup</th><th>Reason</th></tr>
+      <tr><td>Database</td><td>PostgreSQL 18.3</td><td>Required by the FRD and reliable for relational campaign data.</td></tr>
+      <tr><td>Port</td><td>5433</td><td>Your local PostgreSQL installation was running on this port.</td></tr>
+      <tr><td>ORM</td><td>Prisma 6.19.3</td><td>Type-safe schema, migration, client generation, and Studio UI.</td></tr>
+      <tr><td>Database Name</td><td>email_campaign_platform</td><td>Matches the platform purpose and environment configuration.</td></tr>
+      <tr><td>Seed Runner</td><td>tsx + dotenv-cli</td><td>Runs TypeScript seed files while loading root environment variables.</td></tr>
+    </table>
+
+    <h2>What We Did</h2>
+    <table>
+      <tr><th>Step</th><th>Action</th><th>Why</th></tr>
+      <tr><td>1</td><td>Installed PostgreSQL manually.</td><td>The machine did not have PostgreSQL installed, and the user chose manual installation instead of Docker.</td></tr>
+      <tr><td>2</td><td>Skipped Stack Builder.</td><td>Stack Builder is optional and not required for this app.</td></tr>
+      <tr><td>3</td><td>Created/used database email_campaign_platform.</td><td>Prisma needs an existing PostgreSQL database target for migration.</td></tr>
+      <tr><td>4</td><td>Updated DATABASE_URL to port 5433.</td><td>Your PostgreSQL server was configured on 5433 rather than the default 5432.</td></tr>
+      <tr><td>5</td><td>Installed Prisma packages at compatible version 6.19.3.</td><td>Prisma CLI attempted to use 6.19.3, so the package versions were aligned.</td></tr>
+      <tr><td>6</td><td>Updated API Prisma scripts to use dotenv-cli.</td><td>The Prisma commands run from apps/api and need root .env values.</td></tr>
+      <tr><td>7</td><td>Removed conflicting prisma/.env usage.</td><td>Duplicate DATABASE_URL values caused Prisma Studio conflict.</td></tr>
+      <tr><td>8</td><td>Generated Prisma Client.</td><td>Required before using Prisma Client in API and seed code.</td></tr>
+      <tr><td>9</td><td>Ran migration.</td><td>Created all database tables from prisma/schema.prisma.</td></tr>
+      <tr><td>10</td><td>Ran seed script.</td><td>Inserted demo organisation, admin user, contacts, templates, segment, and campaign draft.</td></tr>
+      <tr><td>11</td><td>Ran typecheck and build.</td><td>Confirmed the database changes did not break the monorepo.</td></tr>
+    </table>
+
+    <h2>Environment Configuration</h2>
+    <p>The final root environment file uses PostgreSQL on localhost port 5433.</p>
+    <pre>DATABASE_URL=&quot;postgresql://postgres:postgres@localhost:5433/email_campaign_platform?schema=public&quot;
+JWT_ACCESS_SECRET=&quot;change-me-access-secret&quot;
+JWT_REFRESH_SECRET=&quot;change-me-refresh-secret&quot;
+ACCESS_TOKEN_MINUTES=&quot;15&quot;
+REFRESH_TOKEN_DAYS=&quot;7&quot;
+API_PORT=&quot;4000&quot;
+WEB_ORIGIN=&quot;http://localhost:5173&quot;
+AWS_REGION=&quot;ap-south-1&quot;
+AWS_ACCESS_KEY_ID=&quot;&quot;
+AWS_SECRET_ACCESS_KEY=&quot;&quot;
+SES_CONFIGURATION_SET=&quot;email-platform-events&quot;
+SES_FROM_EMAIL=&quot;verified@example.com&quot;
+S3_BUCKET=&quot;&quot;
+</pre>
+    <div class="callout warning"><strong>Note:</strong> This is local development configuration. Real secrets should not be committed to GitHub.</div>
+
+    <h2>Prisma Scripts</h2>
+    <p>The API package scripts were updated so Prisma always loads the root .env file.</p>
+    <pre>"prisma:generate": "dotenv -e ../../.env -- prisma generate --schema ../../prisma/schema.prisma",
+"prisma:migrate": "dotenv -e ../../.env -- prisma migrate dev --schema ../../prisma/schema.prisma",
+"prisma:seed": "dotenv -e ../../.env -- tsx src/seed.ts",
+"prisma:studio": "dotenv -e ../../.env -- prisma studio --schema ../../prisma/schema.prisma"</pre>
+
+    <h2>Commands Run</h2>
+    <pre>pnpm add -w -D prisma@6.19.3
+pnpm add -w @prisma/client@6.19.3
+pnpm --filter api add -D prisma@6.19.3
+pnpm --filter api add @prisma/client@6.19.3
+pnpm install
+pnpm db:generate
+pnpm db:migrate
+pnpm db:seed
+pnpm typecheck
+pnpm build</pre>
+
+    <h2>Successful Outputs</h2>
+    <h3>Prisma Generate</h3>
+    <pre>Prisma schema loaded from ..\..\prisma\schema.prisma
+Generated Prisma Client (v6.19.3)</pre>
+    <h3>Prisma Migrate</h3>
+    <pre>Datasource "db": PostgreSQL database "email_campaign_platform", schema "public" at "localhost:5433"
+Already in sync, no schema change or pending migration was found.
+Generated Prisma Client (v6.19.3)</pre>
+    <h3>Prisma Seed</h3>
+    <pre>Database seeded successfully.
+Admin login:
+Email: admin@example.com
+Password: Admin@123</pre>
+    <h3>Root Typecheck</h3>
+    <pre>apps/api typecheck completed
+apps/web typecheck completed
+apps/worker typecheck completed</pre>
+    <h3>Root Build</h3>
+    <pre>apps/web build completed
+apps/api build completed
+apps/worker build completed</pre>
+
+    <h2>Seed Data Created</h2>
+    <table>
+      <tr><th>Model</th><th>Expected Count</th><th>Purpose</th></tr>
+      <tr><td>Organisation</td><td>1</td><td>Tenant container for users, contacts, templates, campaigns, and settings.</td></tr>
+      <tr><td>User</td><td>1</td><td>Super admin login for future auth module.</td></tr>
+      <tr><td>ContactList</td><td>1</td><td>Newsletter Subscribers demo list.</td></tr>
+      <tr><td>Contact</td><td>3</td><td>Sample recipients for campaign testing.</td></tr>
+      <tr><td>ContactListMember</td><td>3</td><td>Links all three contacts to the demo list.</td></tr>
+      <tr><td>Template</td><td>5</td><td>Required FRD starter templates.</td></tr>
+      <tr><td>Segment</td><td>1</td><td>Sample smart segment for future segmentation module.</td></tr>
+      <tr><td>Campaign</td><td>1</td><td>Draft campaign for future campaign workflow testing.</td></tr>
+    </table>
+
+    <h2>Admin Login</h2>
+    <table>
+      <tr><th>Field</th><th>Value</th></tr>
+      <tr><td>Email</td><td>admin@example.com</td></tr>
+      <tr><td>Password</td><td>Admin@123</td></tr>
+      <tr><td>Role</td><td>SUPER_ADMIN</td></tr>
+    </table>
+
+    <h2>Issues Found and Fixed</h2>
+    <div class="callout issue"><strong>Prisma auto-install failed:</strong> Prisma attempted to run pnpm add prisma@6.19.3 automatically. We fixed this by installing Prisma and Prisma Client manually.</div>
+    <div class="callout issue"><strong>DATABASE_URL not found:</strong> Prisma commands run from apps/api could not see the root .env. We fixed this with dotenv-cli in Prisma scripts.</div>
+    <div class="callout issue"><strong>Prisma Studio env conflict:</strong> Both root .env and prisma/.env had DATABASE_URL. We consolidated to the root .env.</div>
+    <div class="callout issue"><strong>Authentication failed:</strong> PostgreSQL credentials needed to match the actual local server and port. The final working URL uses localhost:5433.</div>
+    <div class="callout issue"><strong>Empty database in Studio:</strong> Tables existed but counts were zero before seed ran successfully. The seed script populated the required demo data.</div>
+
+    <h2>Completion Status</h2>
+    <p><span class="status">Database Module Complete</span></p>
+    <p>The database is migrated, Prisma Client is generated, seed data exists, and the full monorepo passes typecheck and build.</p>
+
+    <h2>Next Module</h2>
+    <div class="callout warning"><strong>AWS Base Setup:</strong> add AWS environment variables, AWS SDK packages, SES/dev mailer wrapper, S3 upload helper, SQS queue helper, and a temporary dev email test route.</div>
+
+    <section class="page-break"></section>
+    <h2>Code Appendix</h2>
+    <p>The following appendix contains the relevant database module files from the repo.</p>
+
+    <h3>apps/api/package.json</h3>
+    <pre>{
+  &quot;name&quot;: &quot;api&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;private&quot;: true,
+  &quot;type&quot;: &quot;module&quot;,
+  &quot;main&quot;: &quot;dist/index.js&quot;,
+  &quot;scripts&quot;: {
+    &quot;dev&quot;: &quot;tsx watch src/index.ts&quot;,
+    &quot;build&quot;: &quot;tsc -p tsconfig.json&quot;,
+    &quot;start&quot;: &quot;node dist/index.js&quot;,
+    &quot;typecheck&quot;: &quot;tsc -p tsconfig.json --noEmit&quot;,
+    &quot;lint&quot;: &quot;echo \&quot;lint api\&quot;&quot;,
+    &quot;prisma:generate&quot;: &quot;dotenv -e ../../.env -- prisma generate --schema ../../prisma/schema.prisma&quot;,
+    &quot;prisma:migrate&quot;: &quot;dotenv -e ../../.env -- prisma migrate dev --schema ../../prisma/schema.prisma&quot;,
+    &quot;prisma:seed&quot;: &quot;dotenv -e ../../.env -- tsx src/seed.ts&quot;,
+    &quot;prisma:studio&quot;: &quot;dotenv -e ../../.env -- prisma studio --schema ../../prisma/schema.prisma&quot;
+  },
+  &quot;dependencies&quot;: {
+    &quot;@prisma/client&quot;: &quot;^6.19.3&quot;,
+    &quot;bcryptjs&quot;: &quot;^3.0.2&quot;,
+    &quot;cors&quot;: &quot;^2.8.5&quot;,
+    &quot;dotenv&quot;: &quot;^16.5.0&quot;,
+    &quot;express&quot;: &quot;^5.1.0&quot;,
+    &quot;jsonwebtoken&quot;: &quot;^9.0.2&quot;,
+    &quot;zod&quot;: &quot;^3.24.4&quot;
+  },
+  &quot;devDependencies&quot;: {
+    &quot;@types/bcryptjs&quot;: &quot;^2.4.6&quot;,
+    &quot;@types/cors&quot;: &quot;^2.8.17&quot;,
+    &quot;@types/express&quot;: &quot;^5.0.1&quot;,
+    &quot;@types/jsonwebtoken&quot;: &quot;^9.0.9&quot;,
+    &quot;@types/node&quot;: &quot;^22.15.17&quot;,
+    &quot;dotenv-cli&quot;: &quot;^7.4.4&quot;,
+    &quot;prisma&quot;: &quot;^6.19.3&quot;,
+    &quot;tsx&quot;: &quot;^4.19.4&quot;,
+    &quot;typescript&quot;: &quot;^5.8.3&quot;
+  }
+}
+</pre>
+
+    <h3>prisma/schema.prisma</h3>
+    <pre>generator client {
+  provider = &quot;prisma-client-js&quot;
+}
+
+datasource db {
+  provider = &quot;postgresql&quot;
+  url      = env(&quot;DATABASE_URL&quot;)
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  CAMPAIGN_MANAGER
+  VIEWER
+}
+
+enum ContactStatus {
+  ACTIVE
+  UNSUBSCRIBED
+  BOUNCED
+  COMPLAINED
+}
+
+enum ContactSource {
+  IMPORT
+  FORM
+  MANUAL
+  API
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  PAUSED
+  CANCELLED
+}
+
+enum SendStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  BOUNCED
+  COMPLAINED
+  UNSUBSCRIBED
+  FAILED
+}
+
+enum EventType {
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  BOUNCED
+  COMPLAINED
+  UNSUBSCRIBED
+}
+
+enum SuppressionReason {
+  BOUNCED
+  COMPLAINED
+  UNSUBSCRIBED
+  MANUAL
+}
+
+enum ImportStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model Organisation {
+  id           String   @id @default(cuid())
+  name         String
+  logoUrl      String?
+  fromEmail    String?
+  sesConfigSet String?
+  awsRegion    String   @default(&quot;ap-south-1&quot;)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users        User[]
+  lists        ContactList[]
+  contacts     Contact[]
+  segments     Segment[]
+  templates    Template[]
+  campaigns    Campaign[]
+  suppressions SuppressionList[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         UserRole @default(CAMPAIGN_MANAGER)
+  orgId        String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  organisation Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+model ContactList {
+  id          String   @id @default(cuid())
+  orgId       String
+  name        String
+  description String?
+  tags        String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organisation Organisation        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  members      ContactListMember[]
+  importJobs   ImportJob[]
+
+  @@unique([orgId, name])
+}
+
+model Contact {
+  id           String        @id @default(cuid())
+  orgId        String
+  email        String
+  firstName    String?
+  lastName     String?
+  phone        String?
+  status       ContactStatus @default(ACTIVE)
+  customFields Json          @default(&quot;{}&quot;)
+  source       ContactSource @default(MANUAL)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  organisation Organisation        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  lists        ContactListMember[]
+  sends        CampaignSend[]
+  events       EmailEvent[]
+
+  @@unique([orgId, email])
+}
+
+model ContactListMember {
+  contactId    String
+  listId       String
+  subscribedAt DateTime @default(now())
+
+  contact Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  list    ContactList @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  @@id([contactId, listId])
+}
+
+model Segment {
+  id        String   @id @default(cuid())
+  orgId     String
+  name      String
+  rules     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organisation Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+model Template {
+  id           String   @id @default(cuid())
+  orgId        String
+  name         String
+  category     String
+  blocks       Json     @default(&quot;[]&quot;)
+  html         String
+  thumbnailUrl String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  organisation Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  campaigns    Campaign[]
+}
+
+model Campaign {
+  id           String         @id @default(cuid())
+  orgId        String
+  name         String
+  subject      String
+  previewText  String?
+  fromName     String
+  fromEmail    String
+  replyToEmail String?
+  status       CampaignStatus @default(DRAFT)
+  templateId   String?
+  scheduledAt  DateTime?
+  timezone     String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  organisation Organisation   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  template     Template?      @relation(fields: [templateId], references: [id])
+  sends        CampaignSend[]
+  events       EmailEvent[]
+}
+
+model CampaignSend {
+  id           String     @id @default(cuid())
+  campaignId   String
+  contactId    String
+  sesMessageId String?
+  status       SendStatus @default(QUEUED)
+  sentAt       DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contact  Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, contactId])
+}
+
+model EmailEvent {
+  id         String    @id @default(cuid())
+  contactId String?
+  campaignId String?
+  eventType EventType
+  occurredAt DateTime @default(now())
+  ip         String?
+  userAgent  String?
+  metadata   Json      @default(&quot;{}&quot;)
+
+  contact  Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  @@index([campaignId, eventType])
+  @@index([contactId, eventType])
+}
+
+model SuppressionList {
+  id           String            @id @default(cuid())
+  orgId        String
+  email        String
+  reason       SuppressionReason
+  suppressedAt DateTime          @default(now())
+
+  organisation Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, email])
+}
+
+model ImportJob {
+  id        String       @id @default(cuid())
+  listId    String
+  status    ImportStatus @default(PENDING)
+  totalRows Int          @default(0)
+  added     Int          @default(0)
+  updated   Int          @default(0)
+  skipped   Int          @default(0)
+  errored   Int          @default(0)
+  startedAt DateTime?
+  endedAt   DateTime?
+  createdAt DateTime     @default(now())
+
+  list ContactList @relation(fields: [listId], references: [id], onDelete: Cascade)
+}
+</pre>
+
+    <h3>apps/api/src/seed.ts</h3>
+    <pre>import &quot;dotenv/config&quot;;
+import { PrismaClient, UserRole } from &quot;@prisma/client&quot;;
+import bcrypt from &quot;bcryptjs&quot;;
+
+const prisma = new PrismaClient();
+
+const starterTemplates = [
+  {
+    name: &quot;Welcome&quot;,
+    category: &quot;Onboarding&quot;,
+    html: `
+      &lt;div style=&quot;font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;&quot;&gt;
+        &lt;h1 style=&quot;color:#172033;&quot;&gt;Welcome {{first_name}}&lt;/h1&gt;
+        &lt;p&gt;Thanks for joining us. We are glad to have you here.&lt;/p&gt;
+        &lt;a href=&quot;https://example.com&quot; style=&quot;display:inline-block;background:#1f5eff;color:#fff;padding:12px 18px;text-decoration:none;border-radius:6px;&quot;&gt;Get Started&lt;/a&gt;
+        &lt;p style=&quot;font-size:12px;color:#687386;margin-top:32px;&quot;&gt;{{unsubscribe_link}}&lt;/p&gt;
+      &lt;/div&gt;
+    `
+  },
+  {
+    name: &quot;Newsletter&quot;,
+    category: &quot;Newsletter&quot;,
+    html: `
+      &lt;div style=&quot;font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;&quot;&gt;
+        &lt;h1 style=&quot;color:#172033;&quot;&gt;Monthly Newsletter&lt;/h1&gt;
+        &lt;p&gt;Hello {{first_name}}, here are this month&#39;s updates.&lt;/p&gt;
+        &lt;hr style=&quot;border:none;border-top:1px solid #d8dee9;&quot; /&gt;
+        &lt;p&gt;Feature update, product news, and useful resources.&lt;/p&gt;
+        &lt;p style=&quot;font-size:12px;color:#687386;margin-top:32px;&quot;&gt;{{unsubscribe_link}}&lt;/p&gt;
+      &lt;/div&gt;
+    `
+  },
+  {
+    name: &quot;Promotional&quot;,
+    category: &quot;Marketing&quot;,
+    html: `
+      &lt;div style=&quot;font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;&quot;&gt;
+        &lt;h1 style=&quot;color:#172033;&quot;&gt;Special Offer&lt;/h1&gt;
+        &lt;p&gt;Hi {{first_name}}, this offer is available for a limited time.&lt;/p&gt;
+        &lt;a href=&quot;https://example.com/offer&quot; style=&quot;display:inline-block;background:#009b8f;color:#fff;padding:12px 18px;text-decoration:none;border-radius:6px;&quot;&gt;View Offer&lt;/a&gt;
+        &lt;p style=&quot;font-size:12px;color:#687386;margin-top:32px;&quot;&gt;{{unsubscribe_link}}&lt;/p&gt;
+      &lt;/div&gt;
+    `
+  },
+  {
+    name: &quot;Event Invite&quot;,
+    category: &quot;Events&quot;,
+    html: `
+      &lt;div style=&quot;font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;&quot;&gt;
+        &lt;h1 style=&quot;color:#172033;&quot;&gt;You&#39;re Invited&lt;/h1&gt;
+        &lt;p&gt;Join us for our upcoming event.&lt;/p&gt;
+        &lt;a href=&quot;https://example.com/event&quot; style=&quot;display:inline-block;background:#d88700;color:#fff;padding:12px 18px;text-decoration:none;border-radius:6px;&quot;&gt;Register Now&lt;/a&gt;
+        &lt;p style=&quot;font-size:12px;color:#687386;margin-top:32px;&quot;&gt;{{unsubscribe_link}}&lt;/p&gt;
+      &lt;/div&gt;
+    `
+  },
+  {
+    name: &quot;Training Notice&quot;,
+    category: &quot;Training&quot;,
+    html: `
+      &lt;div style=&quot;font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;&quot;&gt;
+        &lt;h1 style=&quot;color:#172033;&quot;&gt;Training Session&lt;/h1&gt;
+        &lt;p&gt;Hello {{first_name}}, your training session details are below.&lt;/p&gt;
+        &lt;p&gt;Date: Coming soon&lt;/p&gt;
+        &lt;p style=&quot;font-size:12px;color:#687386;margin-top:32px;&quot;&gt;{{unsubscribe_link}}&lt;/p&gt;
+      &lt;/div&gt;
+    `
+  }
+];
+
+async function main() {
+  const organisation = await prisma.organisation.upsert({
+    where: {
+      id: &quot;seed-org&quot;
+    },
+    update: {},
+    create: {
+      id: &quot;seed-org&quot;,
+      name: &quot;Demo Organisation&quot;,
+      fromEmail: &quot;verified@example.com&quot;,
+      sesConfigSet: &quot;email-platform-events&quot;,
+      awsRegion: &quot;ap-south-1&quot;
+    }
+  });
+
+  const passwordHash = await bcrypt.hash(&quot;Admin@123&quot;, 10);
+
+  await prisma.user.upsert({
+    where: {
+      email: &quot;admin@example.com&quot;
+    },
+    update: {
+      passwordHash,
+      role: UserRole.SUPER_ADMIN,
+      orgId: organisation.id
+    },
+    create: {
+      email: &quot;admin@example.com&quot;,
+      name: &quot;Super Admin&quot;,
+      passwordHash,
+      role: UserRole.SUPER_ADMIN,
+      orgId: organisation.id
+    }
+  });
+
+  const list = await prisma.contactList.upsert({
+    where: {
+      orgId_name: {
+        orgId: organisation.id,
+        name: &quot;Newsletter Subscribers&quot;
+      }
+    },
+    update: {},
+    create: {
+      orgId: organisation.id,
+      name: &quot;Newsletter Subscribers&quot;,
+      description: &quot;Seed list for demo contacts&quot;,
+      tags: [&quot;demo&quot;, &quot;newsletter&quot;]
+    }
+  });
+
+  const contacts = [
+    {
+      email: &quot;aisha@example.com&quot;,
+      firstName: &quot;Aisha&quot;,
+      lastName: &quot;Rao&quot;,
+      customFields: {
+        company: &quot;Acme&quot;,
+        city: &quot;Chennai&quot;
+      }
+    },
+    {
+      email: &quot;rahul@example.com&quot;,
+      firstName: &quot;Rahul&quot;,
+      lastName: &quot;Mehta&quot;,
+      customFields: {
+        company: &quot;Northstar&quot;,
+        city: &quot;Bengaluru&quot;
+      }
+    },
+    {
+      email: &quot;priya@example.com&quot;,
+      firstName: &quot;Priya&quot;,
+      lastName: &quot;Sharma&quot;,
+      customFields: {
+        company: &quot;Bluepeak&quot;,
+        city: &quot;Mumbai&quot;
+      }
+    }
+  ];
+
+  for (const item of contacts) {
+    const contact = await prisma.contact.upsert({
+      where: {
+        orgId_email: {
+          orgId: organisation.id,
+          email: item.email
+        }
+      },
+      update: {
+        firstName: item.firstName,
+        lastName: item.lastName,
+        customFields: item.customFields
+      },
+      create: {
+        orgId: organisation.id,
+        email: item.email,
+        firstName: item.firstName,
+        lastName: item.lastName,
+        source: &quot;MANUAL&quot;,
+        customFields: item.customFields
+      }
+    });
+
+    await prisma.contactListMember.upsert({
+      where: {
+        contactId_listId: {
+          contactId: contact.id,
+          listId: list.id
+        }
+      },
+      update: {},
+      create: {
+        contactId: contact.id,
+        listId: list.id
+      }
+    });
+  }
+
+  const createdTemplates = [];
+
+  for (const template of starterTemplates) {
+    const created = await prisma.template.upsert({
+      where: {
+        id: `seed-template-${template.name.toLowerCase().replaceAll(&quot; &quot;, &quot;-&quot;)}`
+      },
+      update: {
+        name: template.name,
+        category: template.category,
+        html: template.html,
+        blocks: []
+      },
+      create: {
+        id: `seed-template-${template.name.toLowerCase().replaceAll(&quot; &quot;, &quot;-&quot;)}`,
+        orgId: organisation.id,
+        name: template.name,
+        category: template.category,
+        html: template.html,
+        blocks: []
+      }
+    });
+
+    createdTemplates.push(created);
+  }
+
+  await prisma.segment.upsert({
+    where: {
+      id: &quot;seed-segment-chennai&quot;
+    },
+    update: {},
+    create: {
+      id: &quot;seed-segment-chennai&quot;,
+      orgId: organisation.id,
+      name: &quot;City equals Chennai&quot;,
+      rules: {
+        operator: &quot;AND&quot;,
+        conditions: [
+          {
+            field: &quot;custom.city&quot;,
+            operator: &quot;equals&quot;,
+            value: &quot;Chennai&quot;
+          }
+        ]
+      }
+    }
+  });
+
+  await prisma.campaign.upsert({
+    where: {
+      id: &quot;seed-campaign-draft&quot;
+    },
+    update: {},
+    create: {
+      id: &quot;seed-campaign-draft&quot;,
+      orgId: organisation.id,
+      name: &quot;Demo Welcome Campaign&quot;,
+      subject: &quot;Welcome to Demo Organisation&quot;,
+      previewText: &quot;A quick welcome message for new subscribers&quot;,
+      fromName: &quot;Demo Marketing&quot;,
+      fromEmail: &quot;verified@example.com&quot;,
+      replyToEmail: &quot;verified@example.com&quot;,
+      templateId: createdTemplates[0]?.id,
+      status: &quot;DRAFT&quot;,
+      timezone: &quot;Asia/Kolkata&quot;
+    }
+  });
+
+  console.log(&quot;Database seeded successfully.&quot;);
+  console.log(&quot;Admin login:&quot;);
+  console.log(&quot;Email: admin@example.com&quot;);
+  console.log(&quot;Password: Admin@123&quot;);
+}
+
+main()
+  .catch((error) =&gt; {
+    console.error(error);
+    process.exit(1);
+  })
+  .finally(async () =&gt; {
+    await prisma.$disconnect();
+  });
+</pre>
+  </body>
+</html>

@@ -1,0 +1,261 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  CAMPAIGN_MANAGER
+  VIEWER
+}
+
+enum ContactStatus {
+  ACTIVE
+  UNSUBSCRIBED
+  BOUNCED
+  COMPLAINED
+}
+
+enum ContactSource {
+  IMPORT
+  FORM
+  MANUAL
+  API
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  PAUSED
+  CANCELLED
+}
+
+enum SendStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  BOUNCED
+  COMPLAINED
+  UNSUBSCRIBED
+  FAILED
+}
+
+enum EventType {
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  BOUNCED
+  COMPLAINED
+  UNSUBSCRIBED
+}
+
+enum SuppressionReason {
+  BOUNCED
+  COMPLAINED
+  UNSUBSCRIBED
+  MANUAL
+}
+
+enum ImportStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model Organisation {
+  id           String   @id @default(cuid())
+  name         String
+  logoUrl      String?
+  fromEmail    String?
+  sesConfigSet String?
+  awsRegion    String   @default("ap-south-1")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users        User[]
+  lists        ContactList[]
+  contacts     Contact[]
+  segments     Segment[]
+  templates    Template[]
+  campaigns    Campaign[]
+  suppressions SuppressionList[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         UserRole @default(CAMPAIGN_MANAGER)
+  orgId        String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  organisation Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+model ContactList {
+  id          String   @id @default(cuid())
+  orgId       String
+  name        String
+  description String?
+  tags        String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organisation Organisation        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  members      ContactListMember[]
+  importJobs   ImportJob[]
+
+  @@unique([orgId, name])
+}
+
+model Contact {
+  id           String        @id @default(cuid())
+  orgId        String
+  email        String
+  firstName    String?
+  lastName     String?
+  phone        String?
+  status       ContactStatus @default(ACTIVE)
+  customFields Json          @default("{}")
+  source       ContactSource @default(MANUAL)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  organisation Organisation        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  lists        ContactListMember[]
+  sends        CampaignSend[]
+  events       EmailEvent[]
+
+  @@unique([orgId, email])
+}
+
+model ContactListMember {
+  contactId    String
+  listId       String
+  subscribedAt DateTime @default(now())
+
+  contact Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  list    ContactList @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  @@id([contactId, listId])
+}
+
+model Segment {
+  id        String   @id @default(cuid())
+  orgId     String
+  name      String
+  rules     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organisation Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+model Template {
+  id           String   @id @default(cuid())
+  orgId        String
+  name         String
+  category     String
+  blocks       Json     @default("[]")
+  html         String
+  thumbnailUrl String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  organisation Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  campaigns    Campaign[]
+}
+
+model Campaign {
+  id           String         @id @default(cuid())
+  orgId        String
+  name         String
+  subject      String
+  previewText  String?
+  fromName     String
+  fromEmail    String
+  replyToEmail String?
+  status       CampaignStatus @default(DRAFT)
+  templateId   String?
+  scheduledAt  DateTime?
+  timezone     String?
+  tags         String[]       @default([])
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  organisation Organisation   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  template     Template?      @relation(fields: [templateId], references: [id])
+  sends        CampaignSend[]
+  events       EmailEvent[]
+}
+
+model CampaignSend {
+  id           String     @id @default(cuid())
+  campaignId   String
+  contactId    String
+  sesMessageId String?
+  status       SendStatus @default(QUEUED)
+  sentAt       DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contact  Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, contactId])
+}
+
+model EmailEvent {
+  id         String    @id @default(cuid())
+  contactId String?
+  campaignId String?
+  eventType EventType
+  occurredAt DateTime @default(now())
+  ip         String?
+  userAgent  String?
+  metadata   Json      @default("{}")
+
+  contact  Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  @@index([campaignId, eventType])
+  @@index([contactId, eventType])
+}
+
+model SuppressionList {
+  id           String            @id @default(cuid())
+  orgId        String
+  email        String
+  reason       SuppressionReason
+  suppressedAt DateTime          @default(now())
+
+  organisation Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, email])
+}
+
+model ImportJob {
+  id        String       @id @default(cuid())
+  listId    String
+  status    ImportStatus @default(PENDING)
+  totalRows Int          @default(0)
+  added     Int          @default(0)
+  updated   Int          @default(0)
+  skipped   Int          @default(0)
+  errored   Int          @default(0)
+  startedAt DateTime?
+  endedAt   DateTime?
+  createdAt DateTime     @default(now())
+
+  list ContactList @relation(fields: [listId], references: [id], onDelete: Cascade)
+}

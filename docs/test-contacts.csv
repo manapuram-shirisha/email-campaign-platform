@@ -1,0 +1,11 @@
+email,first_name,last_name,phone,status,source,company,city,notes
+manapuramshiri17@gmail.com,Shiri,Manapuram,,ACTIVE,MANUAL,Real Test,Hyderabad,Super admin and SES sender mailbox
+yasalapun@gmail.com,Yasalapu,N,,ACTIVE,MANUAL,Real Test,Hyderabad,Campaign admin mailbox
+nikhilyasalapu77@gmail.com,Nikhil,Yasalapu,,ACTIVE,MANUAL,Real Test,Hyderabad,Viewer mailbox
+nyasalapu@gmail.com,N,Yasalapu,,ACTIVE,MANUAL,Real Test,Hyderabad,Additional real test recipient
+manapuramshiri17+newsletter@gmail.com,Newsletter,Tester,,ACTIVE,IMPORT,Import Test,Hyderabad,Plus-address import test
+yasalapun+training@gmail.com,Training,Tester,,ACTIVE,IMPORT,Import Test,Hyderabad,Plus-address import test
+nikhilyasalapu77+viewer@gmail.com,Viewer,Tester,,ACTIVE,IMPORT,Import Test,Hyderabad,Plus-address import test
+nyasalapu+promo@gmail.com,Promo,Tester,,ACTIVE,IMPORT,Import Test,Hyderabad,Plus-address import test
+sample.customer@example.com,Sample,Customer,,ACTIVE,IMPORT,Example Company,Chennai,Non-delivery sample row for import tests only
+sample.lead@example.com,Sample,Lead,,ACTIVE,IMPORT,Example Company,Bengaluru,Non-delivery sample row for import tests only
