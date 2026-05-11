@@ -20,7 +20,7 @@ import { organisationRouter } from "./routes/organisation.js";
 
 const app = express();
 
-const port = Number(process.env.API_PORT ?? 4000);
+const port = Number(process.env.PORT ?? process.env.API_PORT ?? 4000);
 const webOrigin = process.env.WEB_ORIGIN ?? "http://localhost:5173";
 
 app.use(cors({ origin: webOrigin }));
