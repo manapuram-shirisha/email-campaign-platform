@@ -182,3 +182,7 @@ Full deployment instructions are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 Do not commit `.env`, AWS keys, database passwords, JWT secrets, or production connection strings.
 
 If any AWS credential was ever exposed locally or in logs, rotate it in AWS IAM before deploying.
+
+## Deployment Status
+
+The recommended production setup is Vercel for the web app, Render for the API and worker, and managed PostgreSQL for the database.
