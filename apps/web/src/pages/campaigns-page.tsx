@@ -177,8 +177,17 @@ export function CampaignsPage(props: {
     }
   }
 
-  async function sendNow(id: string) {
+  async function sendNow(id: string, templateId: string | null) {
     if (!canWrite) return;
+    if (!templateId) {
+      setStatusMessage("Select a template for the campaign before sending.");
+      return;
+    }
+    if (selectedListIds.length === 0 && !segmentId) {
+      setStatusMessage("Select at least one list or enter a segment ID before sending.");
+      return;
+    }
+
     try {
       const data = await apiFetch(`/api/campaigns/${id}/send-now`, {
         method: "POST",
@@ -411,8 +420,18 @@ export function CampaignsPage(props: {
                 <button onClick={() => props.onOpenReport(campaign.id)}>View Report</button>
                 <button onClick={() => void duplicateCampaign(campaign.id)} disabled={!canWrite}>Duplicate</button>
                 <button onClick={() => void testCampaign(campaign.id)} disabled={!canWrite}>Test</button>
-                <button onClick={() => void sendNow(campaign.id)} disabled={!canWrite}>Send Now</button>
-                <button onClick={() => void scheduleCampaign(campaign.id)} disabled={!canWrite}>Schedule</button>
+                <button
+                  onClick={() => void sendNow(campaign.id, campaign.templateId)}
+                  disabled={!canWrite || !campaign.templateId || (selectedListIds.length === 0 && !segmentId)}
+                >
+                  Send Now
+                </button>
+                <button
+                  onClick={() => void scheduleCampaign(campaign.id)}
+                  disabled={!canWrite || (selectedListIds.length === 0 && !segmentId)}
+                >
+                  Schedule
+                </button>
                 {campaign.status === "SENDING" ? (
                   <button onClick={() => void pauseCampaign(campaign.id)} disabled={!canWrite}>Pause</button>
                 ) : null}

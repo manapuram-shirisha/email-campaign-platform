@@ -200,6 +200,10 @@ async function queueCampaignSend(input: {
     return { ok: false as const, status: 400, body: { message: "Template is required before sending" } };
   }
 
+  if (input.listIds.length === 0 && !input.segmentId) {
+    return { ok: false as const, status: 400, body: { message: "Select at least one list or a segment before sending" } };
+  }
+
   const recipients = await resolveRecipients({
     orgId: input.orgId,
     listIds: input.listIds,

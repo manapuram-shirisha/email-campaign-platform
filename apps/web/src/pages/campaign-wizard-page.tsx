@@ -213,6 +213,11 @@ export function CampaignWizardPage(props: {
 
   async function sendNow() {
     if (!draftId) return;
+    if (selectedListIds.length === 0 && !segmentId) {
+      setStatus("Select at least one list or enter a segment ID before sending.");
+      return;
+    }
+
     try {
       const data = await apiFetch(`/api/campaigns/${draftId}/send`, {
         method: "POST",
@@ -232,6 +237,11 @@ export function CampaignWizardPage(props: {
 
   async function schedule() {
     if (!draftId || !scheduleAt) return;
+    if (selectedListIds.length === 0 && !segmentId) {
+      setStatus("Select at least one list or enter a segment ID before scheduling.");
+      return;
+    }
+
     try {
       const data = await apiFetch(`/api/campaigns/${draftId}/schedule`, {
         method: "POST",
@@ -344,7 +354,13 @@ export function CampaignWizardPage(props: {
           <button onClick={() => void sendTest()}>Send Test</button>
 
           <div style={{ borderTop: "1px solid #d8dee9", paddingTop: 8 }}>
-            <button className="primary-button" onClick={() => void sendNow()}>Send Now</button>
+            <button
+              className="primary-button"
+              onClick={() => void sendNow()}
+              disabled={selectedListIds.length === 0 && !segmentId}
+            >
+              Send Now
+            </button>
           </div>
 
           <div style={{ borderTop: "1px solid #d8dee9", paddingTop: 8 }}>
@@ -356,7 +372,7 @@ export function CampaignWizardPage(props: {
               Timezone
               <input value={timezone} onChange={(e) => setTimezone(e.target.value)} />
             </label>
-            <button onClick={() => void schedule()}>Schedule</button>
+            <button onClick={() => void schedule()} disabled={selectedListIds.length === 0 && !segmentId}>Schedule</button>
           </div>
         </section>
       ) : null}
