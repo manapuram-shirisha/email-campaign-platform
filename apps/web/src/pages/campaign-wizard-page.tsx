@@ -33,7 +33,7 @@ export function CampaignWizardPage(props: {
   const [subject, setSubject] = useState("Subject line");
   const [previewText, setPreviewText] = useState("Preview text");
   const [fromName, setFromName] = useState("EmailOps Team");
-  const [fromEmail, setFromEmail] = useState("verified@example.com");
+  const [fromEmail, setFromEmail] = useState("manapuramshiri17@gmail.com");
   const [replyToEmail, setReplyToEmail] = useState("verified@example.com");
   const [timezone, setTimezone] = useState("Asia/Kolkata");
 

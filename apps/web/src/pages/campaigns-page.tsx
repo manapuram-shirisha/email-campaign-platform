@@ -54,7 +54,7 @@ export function CampaignsPage(props: {
   const [subject, setSubject] = useState("Welcome to our newsletter");
   const [previewText, setPreviewText] = useState("Quick update for you");
   const [fromName, setFromName] = useState("EmailOps Team");
-  const [fromEmail, setFromEmail] = useState("verified@example.com");
+  const [fromEmail, setFromEmail] = useState("manapuramshiri17@gmail.com");
   const [replyToEmail, setReplyToEmail] = useState("verified@example.com");
   const [templateId, setTemplateId] = useState("");
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
