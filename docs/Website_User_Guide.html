@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Email Campaign Platform Website User Guide</title>
+    <style>
+      @page { size: A4; margin: 18mm 16mm; }
+      :root {
+        --navy: #172033;
+        --blue: #1f5eff;
+        --teal: #009b8f;
+        --amber: #d88700;
+        --rose: #c2415a;
+        --green: #16835f;
+        --ink: #222836;
+        --muted: #687386;
+        --line: #d8dee9;
+        --panel: #f5f7fb;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: "Segoe UI", Arial, sans-serif;
+        font-size: 10.5pt;
+        line-height: 1.5;
+        background: #fff;
+      }
+      .cover {
+        padding: 34px 38px;
+        color: white;
+        background: linear-gradient(135deg, var(--navy), #124b73);
+        border-radius: 12px;
+        margin-bottom: 28px;
+      }
+      .eyebrow {
+        margin: 0 0 16px;
+        color: #b8f0ec;
+        font-size: 9pt;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 30pt;
+        line-height: 1.08;
+      }
+      h2 {
+        margin: 26px 0 10px;
+        padding-bottom: 7px;
+        color: var(--navy);
+        border-bottom: 2px solid var(--line);
+        font-size: 16pt;
+      }
+      h3 { margin: 18px 0 8px; color: #24324d; font-size: 12.5pt; }
+      p { margin: 7px 0; }
+      ul, ol { margin: 8px 0 12px 20px; padding: 0; }
+      li { margin: 4px 0; }
+      table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+      th { color: white; background: var(--navy); text-align: left; }
+      th, td { padding: 8px 9px; border: 1px solid var(--line); vertical-align: top; }
+      tr:nth-child(even) td { background: #f8fafc; }
+      code { font-family: Consolas, "Courier New", monospace; color: #111827; }
+      .subtitle { max-width: 720px; margin: 0; color: #eff6ff; font-size: 12pt; }
+      .meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 28px; }
+      .meta div { padding: 12px; background: rgba(255,255,255,.11); border: 1px solid rgba(255,255,255,.22); border-radius: 8px; }
+      .meta strong { display: block; color: white; font-size: 8.5pt; text-transform: uppercase; }
+      .callout { padding: 12px 14px; margin: 12px 0; background: var(--panel); border-left: 5px solid var(--blue); border-radius: 8px; }
+      .warning { border-left-color: var(--amber); }
+      .success { border-left-color: var(--green); }
+      .page-break { page-break-before: always; }
+      .muted { color: var(--muted); }
+      .badge { display: inline-block; padding: 3px 8px; color: white; background: var(--green); border-radius: 999px; font-size: 8.5pt; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <section class="cover">
+      <p class="eyebrow">Email Campaign Platform</p>
+      <h1>Website User Guide</h1>
+      <p class="subtitle">A practical guide for using the admin website: login, contacts, templates, campaigns, reports, settings, users, and subscriber unsubscribe/preference pages.</p>
+      <div class="meta">
+        <div><strong>Application</strong>Email Campaign Platform</div>
+        <div><strong>Audience</strong>Admin users and reviewers</div>
+        <div><strong>Status</strong>Current repo guide</div>
+      </div>
+    </section>
+
+    <h2>1. Open the Website</h2>
+    <p>For local use, start the backend and frontend, then open the website in a browser.</p>
+    <table>
+      <tr><th>Service</th><th>Local URL</th><th>Purpose</th></tr>
+      <tr><td>Web app</td><td><code>http://localhost:5173</code></td><td>Main admin website.</td></tr>
+      <tr><td>API</td><td><code>http://localhost:4000</code></td><td>Backend used by the website.</td></tr>
+      <tr><td>Health check</td><td><code>http://localhost:4000/health</code></td><td>Confirms the API is running.</td></tr>
+    </table>
+    <div class="callout warning">
+      If login or pages do not load, first confirm the API is running and the database has been migrated and seeded.
+    </div>
+
+    <h2>2. Demo Login Accounts</h2>
+    <table>
+      <tr><th>Role</th><th>Email</th><th>Password</th><th>Access</th></tr>
+      <tr><td>Super Admin</td><td><code>manapuramshiri17@gmail.com</code></td><td><code>Admin@123</code></td><td>Full access, including organisation settings and user management.</td></tr>
+      <tr><td>Campaign Manager</td><td><code>yasalapun@gmail.com</code></td><td><code>Admin@123</code></td><td>Can manage contacts, templates, campaigns, suppression list, and reports.</td></tr>
+      <tr><td>Viewer</td><td><code>nikhilyasalapu77@gmail.com</code></td><td><code>Admin@123</code></td><td>Read-only access to dashboard and analytics.</td></tr>
+    </table>
+
+    <h2>3. Login, Logout, and Password Reset</h2>
+    <h3>Sign In</h3>
+    <ol>
+      <li>Open <code>/login</code> or the website home page.</li>
+      <li>Enter your email and password.</li>
+      <li>Select <strong>Sign in</strong>.</li>
+      <li>After successful login, the app opens the Dashboard.</li>
+    </ol>
+    <h3>Forgot Password</h3>
+    <ol>
+      <li>On the login page, select <strong>Forgot password?</strong>.</li>
+      <li>Enter the admin email address.</li>
+      <li>Select <strong>Send reset link</strong>.</li>
+      <li>In development mode, the reset token is displayed on screen.</li>
+      <li>Open <code>/reset-password</code>, paste the token, enter the new password, and submit.</li>
+    </ol>
+    <h3>Logout</h3>
+    <p>Use the <strong>Logout</strong> button in the top bar. This ends the local session and returns you to login.</p>
+
+    <h2>4. Navigation and Roles</h2>
+    <p>The left sidebar shows only the modules available to the signed-in user.</p>
+    <table>
+      <tr><th>Page</th><th>Super Admin</th><th>Campaign Manager</th><th>Viewer</th></tr>
+      <tr><td>Dashboard / Analytics</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+      <tr><td>Contacts</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+      <tr><td>Templates</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+      <tr><td>Campaigns</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+      <tr><td>Suppression</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+      <tr><td>Organisation</td><td>Yes</td><td>No</td><td>No</td></tr>
+      <tr><td>Users</td><td>Yes</td><td>No</td><td>No</td></tr>
+      <tr><td>Profile</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+    </table>
+    <p>If a user opens a restricted URL, the website shows an <strong>Access Restricted</strong> message.</p>
+
+    <h2 class="page-break">5. Dashboard and Analytics</h2>
+    <p>The Dashboard gives a quick view of campaign operations.</p>
+    <ul>
+      <li>Review total contacts and sending metrics.</li>
+      <li>Check open rate, click rate, bounce rate, complaint rate, and unsubscribe activity.</li>
+      <li>Use Analytics for a higher-level performance view across campaigns.</li>
+    </ul>
+    <div class="callout success">
+      Viewer users should use Dashboard and Analytics to inspect performance without editing campaign data.
+    </div>
+
+    <h2>6. Contacts</h2>
+    <p>Use Contacts to create lists, add contacts, import CSV files, segment audiences, view contact history, and export list contacts.</p>
+    <h3>Create a Contact List</h3>
+    <ol>
+      <li>Open <strong>Contacts</strong>.</li>
+      <li>Enter a list name and description.</li>
+      <li>Select <strong>Create List</strong>.</li>
+      <li>Select the list from the list selector to make it active.</li>
+    </ol>
+    <h3>Add One Contact</h3>
+    <ol>
+      <li>Choose the target list.</li>
+      <li>Enter email, first name, and last name.</li>
+      <li>Select <strong>Save Contact</strong>.</li>
+    </ol>
+    <h3>Import Contacts from CSV</h3>
+    <ol>
+      <li>Open <strong>Contacts</strong>, then select <strong>Import Screen</strong>, or open <code>/contacts/import</code>.</li>
+      <li>Choose the target list.</li>
+      <li>Paste CSV text with an email column. Example: <code>email,first_name,last_name</code>.</li>
+      <li>Select <strong>Preview</strong> to check rows and column mapping.</li>
+      <li>Select <strong>Import</strong> to save valid contacts.</li>
+    </ol>
+    <h3>Search, Sort, and Bulk Update</h3>
+    <ul>
+      <li>Use search to find contacts by email or name.</li>
+      <li>Sort by subscribed date, email, or first name.</li>
+      <li>Select contacts, choose a status, then use <strong>Bulk Update Status</strong>.</li>
+      <li>Select contacts and use <strong>Bulk Remove from List</strong> when they should no longer belong to that list.</li>
+    </ul>
+    <h3>Contact Detail</h3>
+    <p>Select a contact email or <strong>View</strong> to open contact details. The detail view shows profile fields, list memberships, status, custom fields, and event history.</p>
+    <h3>Segments</h3>
+    <ol>
+      <li>Open <strong>Segments Screen</strong> or <code>/contacts/segments</code>.</li>
+      <li>Enter a segment name.</li>
+      <li>Select the operator: <strong>AND</strong> means all conditions must match, <strong>OR</strong> means any condition can match.</li>
+      <li>Add rules such as <code>custom.city equals Chennai</code>.</li>
+      <li>Select <strong>Create Segment</strong>.</li>
+    </ol>
+
+    <h2 class="page-break">7. Templates</h2>
+    <p>Use Templates to create reusable email designs for campaigns.</p>
+    <h3>Template Library</h3>
+    <ol>
+      <li>Open <strong>Templates</strong>.</li>
+      <li>Review existing templates by name and category.</li>
+      <li>Select <strong>Create Template</strong> to add a new template.</li>
+      <li>Select <strong>Edit</strong> to open the template editor.</li>
+      <li>Use <strong>Duplicate</strong> to copy a template or <strong>Delete</strong> to remove one.</li>
+    </ol>
+    <h3>Template Editor</h3>
+    <p>The editor has two modes: <strong>Blocks</strong> and <strong>HTML</strong>.</p>
+    <ul>
+      <li>Blocks mode supports header, text, image, button, divider, spacer, two-column, three-column, social, footer, and custom HTML blocks.</li>
+      <li>HTML mode lets you edit raw email HTML directly.</li>
+      <li>Use merge tags such as <code>{{first_name}}</code>, <code>{{last_name}}</code>, <code>{{email}}</code>, <code>{{custom.company}}</code>, <code>{{custom.city}}</code>, and <code>{{unsubscribe_link}}</code>.</li>
+      <li>Use Desktop and Mobile preview to check the email layout.</li>
+      <li>Select <strong>Save Template</strong> after editing.</li>
+    </ul>
+    <div class="callout warning">
+      Always include an unsubscribe link in marketing emails. The available merge tag is <code>{{unsubscribe_link}}</code>.
+    </div>
+
+    <h2>8. Campaigns</h2>
+    <p>Use Campaigns to create, send, schedule, pause, resume, cancel, duplicate, and report on campaigns.</p>
+    <h3>Create a Campaign from the Campaigns Page</h3>
+    <ol>
+      <li>Open <strong>Campaigns</strong>.</li>
+      <li>Fill campaign name, subject, preview text, from name, from email, reply-to email, timezone, and tags.</li>
+      <li>Choose a template.</li>
+      <li>Select recipient lists that will be used when sending.</li>
+      <li>Select <strong>Create Campaign</strong>.</li>
+    </ol>
+    <h3>Create a Campaign with the Wizard</h3>
+    <ol>
+      <li>Select <strong>New Campaign Wizard</strong>.</li>
+      <li><strong>Details:</strong> enter campaign identity, sender fields, subject, preview text, timezone, and tags.</li>
+      <li><strong>Recipients:</strong> select contact lists, optional exclusions, or a segment. Use <strong>Estimate Recipients</strong> before continuing.</li>
+      <li><strong>Design:</strong> choose a template, or open the template editor if the design needs changes.</li>
+      <li><strong>Review:</strong> send a test email, then choose <strong>Send Now</strong> or <strong>Schedule</strong>.</li>
+    </ol>
+    <h3>Campaign Actions</h3>
+    <table>
+      <tr><th>Action</th><th>When to Use It</th></tr>
+      <tr><td>Edit</td><td>Update a draft campaign before sending.</td></tr>
+      <tr><td>View Report</td><td>Open campaign analytics and recipient event data.</td></tr>
+      <tr><td>Duplicate</td><td>Create a copy of a previous campaign.</td></tr>
+      <tr><td>Test</td><td>Send a test version to selected test email addresses.</td></tr>
+      <tr><td>Send Now</td><td>Start sending immediately to selected recipients.</td></tr>
+      <tr><td>Schedule</td><td>Set a future send date and time.</td></tr>
+      <tr><td>Pause / Resume</td><td>Temporarily stop or continue a sending campaign.</td></tr>
+      <tr><td>Cancel</td><td>Stop a campaign that should not continue.</td></tr>
+      <tr><td>Delete</td><td>Remove a campaign record when allowed.</td></tr>
+    </table>
+
+    <h2 class="page-break">9. Campaign Reports</h2>
+    <p>Open a report from the Campaigns table by selecting <strong>View Report</strong>.</p>
+    <ul>
+      <li>Review delivery, open, click, bounce, complaint, and unsubscribe metrics.</li>
+      <li>Inspect recipient-level engagement events.</li>
+      <li>Use <strong>Export CSV</strong> to download report data for offline analysis.</li>
+    </ul>
+
+    <h2>10. Suppression List</h2>
+    <p>The suppression list prevents unwanted or unsafe sends.</p>
+    <ol>
+      <li>Open <strong>Suppression</strong>.</li>
+      <li>Add an email address.</li>
+      <li>Choose the reason: bounced, complained, unsubscribed, or manual.</li>
+      <li>Select <strong>Add Entry</strong>.</li>
+      <li>Use <strong>Remove</strong> only when the address should be allowed again.</li>
+    </ol>
+    <div class="callout warning">
+      Do not remove bounce, complaint, or unsubscribe entries unless you have a valid business reason and permission.
+    </div>
+
+    <h2>11. Organisation Settings</h2>
+    <p>Only Super Admin users can access Organisation settings.</p>
+    <ul>
+      <li>Update organisation name and logo URL.</li>
+      <li>Configure default sender email, AWS region, and SES configuration set.</li>
+      <li>Select <strong>Save Settings</strong> after making changes.</li>
+    </ul>
+
+    <h2>12. User Management</h2>
+    <p>Only Super Admin users can manage other admin users.</p>
+    <ol>
+      <li>Open <strong>Users</strong>.</li>
+      <li>Review the current user list.</li>
+      <li>Enter name, email, role, and temporary password for a new teammate.</li>
+      <li>Select <strong>Invite teammate</strong>.</li>
+      <li>Use <strong>Refresh</strong> to reload the users table.</li>
+    </ol>
+    <p>Available roles are <strong>Super Admin</strong>, <strong>Campaign Manager</strong>, and <strong>Viewer</strong>.</p>
+
+    <h2 class="page-break">13. Profile</h2>
+    <p>Every signed-in admin can update their profile.</p>
+    <ol>
+      <li>Open <strong>Profile</strong>.</li>
+      <li>Edit name or email and select <strong>Save profile</strong>.</li>
+      <li>To change password, enter the current password and new password.</li>
+      <li>Select <strong>Update password</strong>.</li>
+    </ol>
+
+    <h2>14. Subscriber Pages</h2>
+    <p>Subscribers do not log in. They use unique links inside received emails.</p>
+    <table>
+      <tr><th>Page</th><th>Purpose</th></tr>
+      <tr><td><code>/unsubscribe?uid=...</code></td><td>Lets a recipient unsubscribe from campaign emails.</td></tr>
+      <tr><td><code>/preferences?uid=...</code></td><td>Lets a recipient manage email preferences.</td></tr>
+    </table>
+    <p>Campaign emails should include the unsubscribe link merge tag so recipients can opt out.</p>
+
+    <h2>15. Recommended End-to-End Usage Flow</h2>
+    <ol>
+      <li>Sign in as Super Admin or Campaign Manager.</li>
+      <li>Create or import contacts into a contact list.</li>
+      <li>Create segments if you need targeted audiences.</li>
+      <li>Create or edit an email template.</li>
+      <li>Create a campaign and select the template.</li>
+      <li>Select recipient lists or a segment.</li>
+      <li>Send a test email.</li>
+      <li>Send now or schedule for later.</li>
+      <li>Monitor campaign progress and reports.</li>
+      <li>Review bounces, complaints, unsubscribes, and suppression entries.</li>
+    </ol>
+
+    <h2>16. Quick Troubleshooting</h2>
+    <table>
+      <tr><th>Problem</th><th>What to Check</th></tr>
+      <tr><td>Cannot log in</td><td>Confirm API is running, database is seeded, and the email/password are correct.</td></tr>
+      <tr><td>Page says Access Restricted</td><td>The signed-in role does not have permission for that module.</td></tr>
+      <tr><td>Contacts or campaigns do not load</td><td>Check API health and browser network errors.</td></tr>
+      <tr><td>CSV import fails</td><td>Confirm the CSV has an email column and valid email addresses.</td></tr>
+      <tr><td>Send Now or Schedule fails</td><td>Confirm recipients are selected and email/queue settings are configured for the environment.</td></tr>
+      <tr><td>Images do not upload</td><td>Confirm S3 settings are configured when using production storage.</td></tr>
+    </table>
+
+    <p class="muted">Generated for the current Email Campaign Platform repository. This guide describes website usage only and does not change application code.</p>
+  </body>
+</html>

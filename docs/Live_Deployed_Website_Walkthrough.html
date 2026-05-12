@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Email Campaign Platform Live Website Walkthrough</title>
+    <style>
+      @page { size: A4; margin: 18mm 16mm; }
+      :root {
+        --navy: #172033;
+        --blue: #1f5eff;
+        --teal: #009b8f;
+        --amber: #d88700;
+        --rose: #c2415a;
+        --green: #16835f;
+        --ink: #222836;
+        --muted: #687386;
+        --line: #d8dee9;
+        --panel: #f5f7fb;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: "Segoe UI", Arial, sans-serif;
+        font-size: 10.5pt;
+        line-height: 1.5;
+        background: #fff;
+      }
+      .cover {
+        padding: 34px 38px;
+        color: white;
+        background: linear-gradient(135deg, var(--navy), #164f78);
+        border-radius: 12px;
+        margin-bottom: 28px;
+      }
+      .eyebrow {
+        margin: 0 0 16px;
+        color: #b8f0ec;
+        font-size: 9pt;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 30pt;
+        line-height: 1.08;
+      }
+      h2 {
+        margin: 26px 0 10px;
+        padding-bottom: 7px;
+        color: var(--navy);
+        border-bottom: 2px solid var(--line);
+        font-size: 16pt;
+      }
+      h3 { margin: 18px 0 8px; color: #24324d; font-size: 12.5pt; }
+      p { margin: 7px 0; }
+      ul, ol { margin: 8px 0 12px 20px; padding: 0; }
+      li { margin: 4px 0; }
+      table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+      th { color: white; background: var(--navy); text-align: left; }
+      th, td { padding: 8px 9px; border: 1px solid var(--line); vertical-align: top; }
+      tr:nth-child(even) td { background: #f8fafc; }
+      code { font-family: Consolas, "Courier New", monospace; color: #111827; overflow-wrap: anywhere; }
+      .subtitle { max-width: 720px; margin: 0; color: #eff6ff; font-size: 12pt; }
+      .meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 28px; }
+      .meta div { padding: 12px; background: rgba(255,255,255,.11); border: 1px solid rgba(255,255,255,.22); border-radius: 8px; }
+      .meta strong { display: block; color: white; font-size: 8.5pt; text-transform: uppercase; }
+      .callout { padding: 12px 14px; margin: 12px 0; background: var(--panel); border-left: 5px solid var(--blue); border-radius: 8px; }
+      .warning { border-left-color: var(--amber); }
+      .success { border-left-color: var(--green); }
+      .issue { border-left-color: var(--rose); }
+      .page-break { page-break-before: always; }
+      .muted { color: var(--muted); }
+      .badge { display: inline-block; padding: 3px 8px; color: white; background: var(--green); border-radius: 999px; font-size: 8.5pt; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <section class="cover">
+      <p class="eyebrow">Email Campaign Platform</p>
+      <h1>Live Website Walkthrough</h1>
+      <p class="subtitle">Step-by-step guide for opening and demonstrating the deployed website hosted with Vercel, Render, and Railway.</p>
+      <div class="meta">
+        <div><strong>Website</strong>https://project-f57re.vercel.app/</div>
+        <div><strong>Web Host</strong>Vercel</div>
+        <div><strong>Backend</strong>Render API + Railway worker</div>
+      </div>
+    </section>
+
+    <h2>1. Deployment Setup</h2>
+    <table>
+      <tr><th>Part</th><th>Platform</th><th>What It Does</th><th>Important Note</th></tr>
+      <tr><td>Frontend website</td><td>Vercel</td><td>Loads the React admin website.</td><td>The website page itself should open quickly.</td></tr>
+      <tr><td>Backend API</td><td>Render free tier</td><td>Handles login, contacts, templates, campaigns, reports, settings, and tracking APIs.</td><td>Free Render services can sleep when idle. The first request may take about 1 minute.</td></tr>
+      <tr><td>Worker</td><td>Railway</td><td>Processes campaign sending jobs and scheduled campaign work.</td><td>Used in the background after campaigns are sent or scheduled.</td></tr>
+      <tr><td>Database</td><td>Managed PostgreSQL</td><td>Stores users, contacts, lists, templates, campaigns, sends, events, and suppressions.</td><td>The API and worker both connect to the same database.</td></tr>
+      <tr><td>Email/queue/storage</td><td>AWS SES, SQS, S3</td><td>Sends emails, queues campaign sends, and stores uploaded email assets.</td><td>Production sending depends on correct AWS credentials and SES verification.</td></tr>
+    </table>
+
+    <div class="callout warning">
+      When showing the website to someone, open it and wait before judging login. Vercel may show the login page immediately, but Render may need around 60 seconds to wake the API. If the first login fails because the API is waking, wait and try again.
+    </div>
+
+    <h2>2. Open the Live Website</h2>
+    <ol>
+      <li>Open <code>https://project-f57re.vercel.app/</code>.</li>
+      <li>The Email Campaign Platform login screen should appear.</li>
+      <li>If the page opens but login is slow, wait about 1 minute for the Render API to wake up.</li>
+      <li>Try signing in again after the API wakes.</li>
+    </ol>
+
+    <h2>3. Login Accounts</h2>
+    <p>Use these seeded demo accounts if they are present in the deployed database.</p>
+    <table>
+      <tr><th>Role</th><th>Email</th><th>Password</th><th>Use This Account To Show</th></tr>
+      <tr><td>Super Admin</td><td><code>manapuramshiri17@gmail.com</code></td><td><code>Admin@123</code></td><td>Everything: dashboard, contacts, templates, campaigns, reports, suppression, organisation settings, users, and profile.</td></tr>
+      <tr><td>Campaign Manager</td><td><code>yasalapun@gmail.com</code></td><td><code>Admin@123</code></td><td>Marketing workflow: contacts, templates, campaigns, reports, and suppression.</td></tr>
+      <tr><td>Viewer</td><td><code>nikhilyasalapu77@gmail.com</code></td><td><code>Admin@123</code></td><td>Read-only dashboard and analytics access.</td></tr>
+    </table>
+
+    <div class="callout issue">
+      If these accounts do not work on the live website, the production database may not be seeded or the passwords may have been changed. In that case, use the account created for the deployed database.
+    </div>
+
+    <h2>4. Best Demo Order</h2>
+    <ol>
+      <li>Open the live Vercel URL.</li>
+      <li>Wait for the Render API if the first login is slow.</li>
+      <li>Sign in as Super Admin.</li>
+      <li>Show the Dashboard and Analytics first.</li>
+      <li>Show Contacts: lists, contact table, import, segments, and contact detail.</li>
+      <li>Show Templates: library, editor, blocks, HTML, merge tags, and preview.</li>
+      <li>Show Campaigns: create campaign, campaign wizard, recipient selection, test send, schedule, send now, and report.</li>
+      <li>Show Settings: suppression list, organisation settings, profile, and users.</li>
+      <li>Explain subscriber pages: unsubscribe and preference center links are opened by email recipients, not by admins.</li>
+    </ol>
+
+    <h2 class="page-break">5. Dashboard</h2>
+    <p>After login, the Dashboard is the first screen. Use it to explain what the platform is for.</p>
+    <ul>
+      <li>Total contacts shows the size of the audience stored in the system.</li>
+      <li>Emails sent shows campaign activity.</li>
+      <li>Open rate and click rate show engagement.</li>
+      <li>Analytics gives a broader view of campaign performance.</li>
+    </ul>
+    <p><strong>Demo line:</strong> This is the control center for checking campaign health before going into contacts, templates, and sending.</p>
+
+    <h2>6. Contacts Walkthrough</h2>
+    <h3>Open Contacts</h3>
+    <ol>
+      <li>Select <strong>Contacts</strong> from the sidebar.</li>
+      <li>Review existing contact lists.</li>
+      <li>Select a list to view its contacts.</li>
+    </ol>
+
+    <h3>Create a List</h3>
+    <ol>
+      <li>Enter a list name and description.</li>
+      <li>Select <strong>Create List</strong>.</li>
+      <li>The new list appears in the list area.</li>
+    </ol>
+
+    <h3>Add a Contact</h3>
+    <ol>
+      <li>Select the target list.</li>
+      <li>Enter email, first name, and last name.</li>
+      <li>Select <strong>Save Contact</strong>.</li>
+    </ol>
+
+    <h3>Import CSV</h3>
+    <ol>
+      <li>Select <strong>Import Screen</strong> or open <code>/contacts/import</code>.</li>
+      <li>Choose the target list.</li>
+      <li>Paste CSV data with an email column.</li>
+      <li>Select <strong>Preview</strong> to validate the file.</li>
+      <li>Select <strong>Import</strong> to save the contacts.</li>
+    </ol>
+
+    <h3>Segments</h3>
+    <ol>
+      <li>Select <strong>Segments Screen</strong> or open <code>/contacts/segments</code>.</li>
+      <li>Create a rule-based segment, such as contacts where <code>custom.city</code> equals <code>Chennai</code>.</li>
+      <li>Use segments later when choosing campaign recipients.</li>
+    </ol>
+
+    <h2>7. Templates Walkthrough</h2>
+    <h3>Template Library</h3>
+    <ol>
+      <li>Select <strong>Templates</strong>.</li>
+      <li>Show the saved email templates.</li>
+      <li>Use <strong>Create Template</strong>, <strong>Edit</strong>, <strong>Duplicate</strong>, or <strong>Delete</strong>.</li>
+    </ol>
+
+    <h3>Template Editor</h3>
+    <ul>
+      <li><strong>Blocks mode:</strong> add header, text, image, button, divider, spacer, columns, social links, footer, and custom HTML blocks.</li>
+      <li><strong>HTML mode:</strong> edit raw email HTML directly.</li>
+      <li><strong>Merge tags:</strong> use <code>{{first_name}}</code>, <code>{{last_name}}</code>, <code>{{email}}</code>, <code>{{custom.company}}</code>, <code>{{custom.city}}</code>, and <code>{{unsubscribe_link}}</code>.</li>
+      <li><strong>Preview:</strong> switch between desktop and mobile preview.</li>
+      <li><strong>Save:</strong> select <strong>Save Template</strong> after changes.</li>
+    </ul>
+
+    <div class="callout warning">
+      For a real email campaign, include <code>{{unsubscribe_link}}</code> in the template footer so recipients can unsubscribe.
+    </div>
+
+    <h2 class="page-break">8. Campaigns Walkthrough</h2>
+    <h3>Campaigns Page</h3>
+    <ol>
+      <li>Select <strong>Campaigns</strong>.</li>
+      <li>Use search, status filters, date filters, or tag filters to find campaigns.</li>
+      <li>Review each campaign status: Draft, Scheduled, Sending, Sent, Paused, or Cancelled.</li>
+    </ol>
+
+    <h3>Create Campaign</h3>
+    <ol>
+      <li>Enter campaign name, subject, preview text, from name, from email, reply-to email, timezone, and tags.</li>
+      <li>Choose a template.</li>
+      <li>Select recipient lists.</li>
+      <li>Select <strong>Create Campaign</strong>.</li>
+    </ol>
+
+    <h3>Campaign Wizard</h3>
+    <ol>
+      <li>Select <strong>New Campaign Wizard</strong>.</li>
+      <li><strong>Details:</strong> add name, subject, sender information, timezone, and tags.</li>
+      <li><strong>Recipients:</strong> select lists, exclusions, or a segment. Use <strong>Estimate Recipients</strong>.</li>
+      <li><strong>Design:</strong> select a template.</li>
+      <li><strong>Review:</strong> send a test email, then choose <strong>Send Now</strong> or <strong>Schedule</strong>.</li>
+    </ol>
+
+    <h3>Campaign Actions</h3>
+    <table>
+      <tr><th>Action</th><th>Purpose</th></tr>
+      <tr><td>Edit</td><td>Modify a draft campaign.</td></tr>
+      <tr><td>View Report</td><td>Open analytics for a campaign.</td></tr>
+      <tr><td>Duplicate</td><td>Copy a campaign for reuse.</td></tr>
+      <tr><td>Test</td><td>Send a test email before sending to the full list.</td></tr>
+      <tr><td>Send Now</td><td>Start sending immediately.</td></tr>
+      <tr><td>Schedule</td><td>Set a future send time.</td></tr>
+      <tr><td>Pause / Resume</td><td>Control an active sending campaign.</td></tr>
+      <tr><td>Cancel</td><td>Stop a campaign.</td></tr>
+      <tr><td>Delete</td><td>Remove a campaign when appropriate.</td></tr>
+    </table>
+
+    <div class="callout">
+      When a campaign is sent or scheduled, the API records the campaign work and the Railway worker processes queued sending jobs in the background.
+    </div>
+
+    <h2>9. Reports and Analytics</h2>
+    <ol>
+      <li>Open <strong>Campaigns</strong>.</li>
+      <li>Select <strong>View Report</strong> for a campaign.</li>
+      <li>Review sent, delivered, opened, clicked, bounced, complained, and unsubscribed metrics.</li>
+      <li>Use <strong>Export CSV</strong> if report data is needed outside the platform.</li>
+    </ol>
+
+    <h2 class="page-break">10. Settings Walkthrough</h2>
+    <h3>Suppression List</h3>
+    <p>Use Suppression to block sends to addresses that bounced, complained, unsubscribed, or were manually suppressed.</p>
+    <ol>
+      <li>Select <strong>Suppression</strong>.</li>
+      <li>Add an email and reason.</li>
+      <li>Select <strong>Add Entry</strong>.</li>
+      <li>Use <strong>Remove</strong> only when the email should be allowed again.</li>
+    </ol>
+
+    <h3>Organisation Settings</h3>
+    <p>Only Super Admin can open this page.</p>
+    <ul>
+      <li>Update organisation name and logo URL.</li>
+      <li>Set default from email and AWS region.</li>
+      <li>Save SES configuration set details.</li>
+    </ul>
+
+    <h3>Users</h3>
+    <p>Only Super Admin can manage admin users.</p>
+    <ol>
+      <li>Select <strong>Users</strong>.</li>
+      <li>Review existing users.</li>
+      <li>Enter name, email, role, and temporary password.</li>
+      <li>Select <strong>Invite teammate</strong>.</li>
+    </ol>
+
+    <h3>Profile</h3>
+    <ol>
+      <li>Select <strong>Profile</strong>.</li>
+      <li>Update name or email and save.</li>
+      <li>Change password by entering current password and new password.</li>
+    </ol>
+
+    <h2>11. Subscriber Pages</h2>
+    <p>Subscribers do not sign into the admin website. They use links inside emails.</p>
+    <table>
+      <tr><th>Page</th><th>Purpose</th></tr>
+      <tr><td><code>/unsubscribe?uid=...</code></td><td>Recipient unsubscribes from emails.</td></tr>
+      <tr><td><code>/preferences?uid=...</code></td><td>Recipient updates email preferences.</td></tr>
+    </table>
+
+    <h2>12. Live Demo Troubleshooting</h2>
+    <table>
+      <tr><th>Problem</th><th>Likely Reason</th><th>What To Do</th></tr>
+      <tr><td>Login page opens, but sign in is slow.</td><td>Render free API is sleeping.</td><td>Wait around 1 minute, then try login again.</td></tr>
+      <tr><td>Login fails immediately.</td><td>Wrong account, unseeded production database, or changed password.</td><td>Use the deployed admin account or seed/reset the production database.</td></tr>
+      <tr><td>Contacts, templates, or campaigns show loading/error.</td><td>API is still waking or database connection is not ready.</td><td>Refresh after a minute and check Render API logs.</td></tr>
+      <tr><td>Send Now does not send real emails.</td><td>AWS SES/SQS/S3 or Railway worker may not be fully configured.</td><td>Check Railway worker logs, AWS SES verification, SQS URLs, and credentials.</td></tr>
+      <tr><td>Images do not upload in templates.</td><td>S3 bucket or credentials may be missing.</td><td>Check S3 bucket, AWS credentials, and API environment variables.</td></tr>
+      <tr><td>Viewer cannot open Contacts or Campaigns.</td><td>This is expected role protection.</td><td>Use Super Admin or Campaign Manager for editing workflows.</td></tr>
+    </table>
+
+    <h2>13. One-Minute Script for Presentation</h2>
+    <p>
+      "This is our Email Campaign Platform. The frontend is deployed on Vercel, the API is on Render free tier, and the background campaign worker is on Railway. Because Render free services sleep when idle, the first login may take about a minute while the API wakes up. Once logged in, admins can manage contacts, build templates, create and schedule campaigns, track reports, handle suppressions, and manage organisation users."
+    </p>
+
+    <p class="muted">Live website checked: https://project-f57re.vercel.app/. This document is a deployed-site walkthrough and does not change application code.</p>
+  </body>
+</html>

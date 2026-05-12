@@ -11,11 +11,14 @@
     "lint": "echo \"lint web\""
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1045.0",
+    "@aws-sdk/client-ses": "^3.1045.0",
+    "@aws-sdk/client-sqs": "^3.1045.0",
     "@vitejs/plugin-react": "^4.4.1",
-    "vite": "^6.3.5",
-    "typescript": "^5.8.3",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
   },
   "devDependencies": {
     "@types/react": "^19.1.3",
