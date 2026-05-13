@@ -10,6 +10,7 @@ const envSchema = z.object({
 
   API_PORT: z.coerce.number().default(4000),
   WEB_ORIGIN: z.string().url().default("http://localhost:5173"),
+  PUBLIC_API_URL: z.string().url().default("http://localhost:4000"),
 
   AWS_REGION: z.string().default("ap-south-2"),
   AWS_ACCESS_KEY_ID: z.string().optional(),

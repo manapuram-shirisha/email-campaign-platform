@@ -28,6 +28,19 @@ export async function receiveSendJobs() {
   return result.Messages ?? [];
 }
 
+export async function deleteSendJob(receiptHandle: string) {
+  if (!env.SQS_SEND_QUEUE_URL || env.EMAIL_PROVIDER === "dev") {
+    return;
+  }
+
+  await sqs.send(
+    new DeleteMessageCommand({
+      QueueUrl: env.SQS_SEND_QUEUE_URL,
+      ReceiptHandle: receiptHandle
+    })
+  );
+}
+
 export async function receiveEventJobs() {
   if (!env.SQS_EVENTS_QUEUE_URL || env.EMAIL_PROVIDER === "dev") {
     return [];
