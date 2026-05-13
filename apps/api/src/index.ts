@@ -4,6 +4,7 @@ import cors from "cors";
 import { sendEmail } from "./services/mailer.js";
 import { enqueueSendJob } from "./services/queue.js";
 import { uploadAsset } from "./services/storage.js";
+import { prisma } from "./lib/prisma.js";
 import { authRouter } from "./routes/auth.js";
 import { profileRouter } from "./routes/profile.js";
 import { usersRouter } from "./routes/users.js";
@@ -23,7 +24,11 @@ const app = express();
 const port = Number(process.env.PORT ?? process.env.API_PORT ?? 4000);
 const webOrigin = process.env.WEB_ORIGIN ?? "http://localhost:5173";
 
-app.use(cors({ origin: webOrigin }));
+app.use(cors({
+  origin: webOrigin,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -83,6 +88,41 @@ app.post("/dev/test-s3", async (_req, res) => {
   });
 
   res.json(result);
+});
+
+app.post("/dev/simulate-open", async (req, res) => {
+  const { campaignId, contactId } = req.body as { campaignId: string; contactId: string };
+  if (!campaignId || !contactId) {
+    return res.status(400).json({ error: "campaignId and contactId required" });
+  }
+
+  await prisma.emailEvent.create({
+    data: {
+      campaignId,
+      contactId,
+      eventType: "OPENED"
+    }
+  });
+
+  res.json({ message: "Simulated open event created" });
+});
+
+app.post("/dev/simulate-click", async (req, res) => {
+  const { campaignId, contactId, url } = req.body as { campaignId: string; contactId: string; url?: string };
+  if (!campaignId || !contactId) {
+    return res.status(400).json({ error: "campaignId and contactId required" });
+  }
+
+  await prisma.emailEvent.create({
+    data: {
+      campaignId,
+      contactId,
+      eventType: "CLICKED",
+      metadata: url ? { url } : {}
+    }
+  });
+
+  res.json({ message: "Simulated click event created" });
 });
 
 app.listen(port, () => {

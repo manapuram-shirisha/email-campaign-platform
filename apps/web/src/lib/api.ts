@@ -59,9 +59,13 @@ export async function apiFetch(path: string, init?: RequestInit) {
         headers: retryHeaders
       });
       const retryData = await retry.json().catch(() => ({}));
-      if (!retry.ok) throw new Error(retryData?.message ?? "Request failed");
+      if (!retry.ok) {
+        localStorage.removeItem("auth");
+        throw new Error(retryData?.message ?? "Request failed");
+      }
       return retryData;
     }
+    localStorage.removeItem("auth");
   }
 
   const data = await res.json().catch(() => ({}));

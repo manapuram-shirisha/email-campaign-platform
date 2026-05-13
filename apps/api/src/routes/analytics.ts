@@ -12,7 +12,7 @@ analyticsRouter.get("/dashboard", async (req, res) => {
   const [contacts, sentRows, recentActivity, allEvents, campaigns] = await Promise.all([
     prisma.contact.count({ where: { orgId } }),
     prisma.campaignSend.findMany({
-      where: { campaign: { orgId } },
+      where: { campaign: { orgId }, status: { not: "QUEUED" } },
       select: { status: true, campaignId: true, contactId: true }
     }),
     prisma.emailEvent.findMany({

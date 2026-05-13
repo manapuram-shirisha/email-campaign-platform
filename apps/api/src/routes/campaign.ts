@@ -285,6 +285,8 @@ async function queueCampaignSend(input: {
     return { ok: false as const, status: 400, body: { message: "Template is required before sending" } };
   }
 
+  const template = campaign.template;
+
   if (input.listIds.length === 0 && !input.segmentId) {
     return { ok: false as const, status: 400, body: { message: "Select at least one list or a segment before sending" } };
   }
@@ -305,24 +307,39 @@ async function queueCampaignSend(input: {
     data: { status: CampaignStatus.SENDING, scheduledAt: new Date() }
   });
 
-  for (const recipient of recipients) {
-    const sendRow = await prisma.campaignSend.upsert({
-      where: {
-        campaignId_contactId: {
+  const sendResults = await Promise.all(
+    recipients.map(async (recipient) => {
+      const sendRow = await prisma.campaignSend.upsert({
+        where: {
+          campaignId_contactId: {
+            campaignId: campaign.id,
+            contactId: recipient.id
+          }
+        },
+        update: {},
+        create: {
           campaignId: campaign.id,
-          contactId: recipient.id
+          contactId: recipient.id,
+          status: "QUEUED"
         }
-      },
-      update: {},
-      create: {
-        campaignId: campaign.id,
-        contactId: recipient.id,
-        status: "QUEUED"
-      }
-    });
+      });
 
-    if (input.immediate) {
-      // Send immediately
+      if (!input.immediate) {
+        await enqueueSendJob({
+          type: "SEND_CAMPAIGN",
+          campaignId: campaign.id,
+          campaignSendId: sendRow.id,
+          contactId: recipient.id,
+          to: recipient.email,
+          subject: campaign.subject,
+html: template.html,
+          fromEmail: campaign.fromEmail,
+          replyToEmail: campaign.replyToEmail
+        });
+
+        return { success: true };
+      }
+
       const uid = makeUid(campaign.id, recipient.id);
       const unsubscribeUrl = `${env.PUBLIC_API_URL}/unsubscribe?uid=${encodeURIComponent(uid)}`;
       const contact = await prisma.contact.findUnique({
@@ -334,7 +351,8 @@ async function queueCampaignSend(input: {
           customFields: true
         }
       });
-      let finalHtml = campaign.template.html;
+
+      let finalHtml = template.html;
       finalHtml = mergeTags(finalHtml, {
         email: contact?.email ?? recipient.email,
         firstName: contact?.firstName ?? null,
@@ -346,50 +364,61 @@ async function queueCampaignSend(input: {
       finalHtml = appendTrackingPixel(finalHtml, uid);
       finalHtml = appendUnsubscribeFooter(finalHtml, uid);
 
-      const sent = await sendEmail({
-        to: recipient.email,
-        subject: campaign.subject,
-        html: finalHtml,
-        from: campaign.fromEmail,
-        replyTo: campaign.replyToEmail ?? undefined,
-        unsubscribeUrl
-      });
+      try {
+        const sent = await sendEmail({
+          to: recipient.email,
+          subject: campaign.subject,
+          html: finalHtml,
+          from: campaign.fromEmail,
+          replyTo: campaign.replyToEmail ?? undefined,
+          unsubscribeUrl
+        });
 
-      await prisma.campaignSend.update({
-        where: { id: sendRow.id },
-        data: {
-          status: "SENT",
-          sentAt: new Date(),
-          sesMessageId: sent.messageId
-        }
-      });
+        await prisma.campaignSend.update({
+          where: { id: sendRow.id },
+          data: {
+            status: "SENT",
+            sentAt: new Date(),
+            sesMessageId: sent.messageId
+          }
+        });
 
-      await prisma.emailEvent.create({
-        data: {
-          campaignId: campaign.id,
-          contactId: recipient.id,
-          eventType: "SENT"
-        }
-      });
-    } else {
-      // Enqueue
-      await enqueueSendJob({
-        type: "SEND_CAMPAIGN",
-        campaignId: campaign.id,
-        campaignSendId: sendRow.id,
-        contactId: recipient.id,
-        to: recipient.email,
-        subject: campaign.subject,
-        html: campaign.template.html,
-        fromEmail: campaign.fromEmail,
-        replyToEmail: campaign.replyToEmail
-      });
-    }
-  }
+        await prisma.emailEvent.create({
+          data: {
+            campaignId: campaign.id,
+            contactId: recipient.id,
+            eventType: "SENT"
+          }
+        });
+
+        return { success: true };
+      } catch (error) {
+        console.error("[SEND NOW] failed to send campaign email", campaign.id, recipient.id, error);
+        await prisma.campaignSend.update({
+          where: { id: sendRow.id },
+          data: { status: "FAILED" }
+        });
+        return { success: false };
+      }
+    })
+  );
 
   if (input.immediate) {
     await markCampaignSentIfComplete(campaign.id);
   }
+
+  const failedCount = sendResults.filter((result) => !result.success).length;
+  const message = input.immediate
+    ? failedCount > 0
+      ? `Campaign send completed with ${failedCount} failed recipient(s)`
+      : "Campaign sent successfully"
+    : "Campaign queued for sending";
+
+  return {
+    ok: true as const,
+    status: 200,
+    body: { message, recipientCount: recipients.length, failedCount }
+  };
 
   return {
     ok: true as const,
