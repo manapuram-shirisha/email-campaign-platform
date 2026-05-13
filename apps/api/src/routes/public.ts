@@ -248,6 +248,16 @@ publicRouter.post("/unsubscribe", async (req, res) => {
     }
   });
 
+  await prisma.emailEvent.create({
+    data: {
+      campaignId: uid.campaignId,
+      contactId: uid.contactId,
+      eventType: EventType.UNSUBSCRIBED,
+      ip: req.ip,
+      userAgent: req.headers["user-agent"] ?? null
+    }
+  });
+
   return res.json({ message: "Unsubscribed successfully" });
 });
 
