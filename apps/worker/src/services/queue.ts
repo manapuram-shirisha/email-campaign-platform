@@ -28,14 +28,31 @@ export async function receiveSendJobs() {
   return result.Messages ?? [];
 }
 
-export async function deleteSendJob(receiptHandle: string) {
-  if (!env.SQS_SEND_QUEUE_URL || env.EMAIL_PROVIDER === "dev") {
+export async function receiveEventJobs() {
+  if (!env.SQS_EVENTS_QUEUE_URL || env.EMAIL_PROVIDER === "dev") {
+    return [];
+  }
+
+  const result = await sqs.send(
+    new ReceiveMessageCommand({
+      QueueUrl: env.SQS_EVENTS_QUEUE_URL,
+      MaxNumberOfMessages: 5,
+      WaitTimeSeconds: 5,
+      MessageSystemAttributeNames: ["ApproximateReceiveCount"]
+    })
+  );
+
+  return result.Messages ?? [];
+}
+
+export async function deleteEventJob(receiptHandle: string) {
+  if (!env.SQS_EVENTS_QUEUE_URL || env.EMAIL_PROVIDER === "dev") {
     return;
   }
 
   await sqs.send(
     new DeleteMessageCommand({
-      QueueUrl: env.SQS_SEND_QUEUE_URL,
+      QueueUrl: env.SQS_EVENTS_QUEUE_URL,
       ReceiptHandle: receiptHandle
     })
   );

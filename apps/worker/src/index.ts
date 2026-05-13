@@ -1,8 +1,8 @@
 import "dotenv/config";
-import { CampaignStatus } from "@prisma/client";
+import { CampaignStatus, EventType } from "@prisma/client";
 import { prisma } from "./lib/prisma.js";
 import { env } from "./config/env.js";
-import { deleteSendJob, enqueueSendJob, receiveSendJobs } from "./services/queue.js";
+import { deleteSendJob, enqueueSendJob, receiveSendJobs, receiveEventJobs, deleteEventJob } from "./services/queue.js";
 import { sendWorkerEmail } from "./services/mailer.js";
 
 function makeUid(campaignId: string, contactId: string) {
@@ -211,6 +211,96 @@ async function markCampaignSentIfComplete(campaignId?: string) {
   });
 }
 
+async function processEventMessage(message: {
+  MessageId?: string;
+  ReceiptHandle?: string;
+  Body?: string;
+}) {
+  const body = JSON.parse(message.Body ?? "{}") as Record<string, unknown>;
+
+  const eventType = String(body.eventType ?? "").toLowerCase();
+  const eventId = String(body.eventId ?? message.MessageId ?? "");
+  const mail = (body.mail ?? {}) as Record<string, unknown>;
+  const sesMessageId = String(mail.messageId ?? "");
+
+  if (!sesMessageId) return { shouldDelete: true as const };
+
+  const send = await prisma.campaignSend.findFirst({
+    where: { sesMessageId },
+    include: { contact: true }
+  });
+  if (!send) return { shouldDelete: true as const };
+  const campaignSend = send;
+
+  async function createDedupedEvent(input: {
+    eventType: EventType;
+    metadata?: Record<string, unknown>;
+  }) {
+    const existing = eventId
+      ? await prisma.emailEvent.findFirst({
+          where: {
+            campaignId: campaignSend.campaignId,
+            contactId: campaignSend.contactId,
+            eventType: input.eventType,
+            metadata: {
+              path: ["eventId"],
+              equals: eventId
+            }
+          }
+        })
+      : null;
+    if (existing) return;
+
+    await prisma.emailEvent.create({
+      data: {
+        campaignId: campaignSend.campaignId,
+        contactId: campaignSend.contactId,
+        eventType: input.eventType,
+        metadata: input.metadata ? { ...input.metadata, eventId } : { eventId }
+      }
+    });
+  }
+
+  if (eventType === "bounce") {
+    const bounce = (body.bounce ?? {}) as Record<string, unknown>;
+    const bounceType = String(bounce.bounceType ?? "");
+    await createDedupedEvent({
+      eventType: EventType.BOUNCED,
+      metadata: { bounceType }
+    });
+    await prisma.campaignSend.update({
+      where: { id: campaignSend.id },
+      data: { status: "BOUNCED" }
+    });
+  } else if (eventType === "complaint") {
+    await createDedupedEvent({
+      eventType: EventType.COMPLAINED
+    });
+    await prisma.campaignSend.update({
+      where: { id: campaignSend.id },
+      data: { status: "COMPLAINED" }
+    });
+  } else if (eventType === "delivery") {
+    await prisma.campaignSend.update({
+      where: { id: campaignSend.id },
+      data: { status: "DELIVERED" }
+    });
+  } else if (eventType === "open") {
+    await createDedupedEvent({
+      eventType: EventType.OPENED
+    });
+  } else if (eventType === "click") {
+    const click = (body.click ?? {}) as Record<string, unknown>;
+    const link = String(click.link ?? "");
+    await createDedupedEvent({
+      eventType: EventType.CLICKED,
+      metadata: { url: link }
+    });
+  }
+
+  return { shouldDelete: true as const };
+}
+
 async function processScheduledCampaigns() {
   const dueCampaigns = await prisma.campaign.findMany({
     where: {
@@ -272,6 +362,22 @@ async function workerTick() {
       } finally {
         if (shouldDelete && message.ReceiptHandle) {
           await deleteSendJob(message.ReceiptHandle);
+        }
+      }
+    }
+
+    const eventJobs = await receiveEventJobs();
+    for (const message of eventJobs) {
+      let shouldDelete = true;
+      try {
+        const result = await processEventMessage(message);
+        shouldDelete = result.shouldDelete;
+      } catch (error) {
+        console.error("[WORKER] failed event message", message.MessageId, error);
+        shouldDelete = false;
+      } finally {
+        if (shouldDelete && message.ReceiptHandle) {
+          await deleteEventJob(message.ReceiptHandle);
         }
       }
     }

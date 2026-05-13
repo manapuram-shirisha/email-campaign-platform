@@ -5,6 +5,8 @@ import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/auth.js";
 import { requireRole } from "../middleware/roles.js";
 import { enqueueSendJob } from "../services/queue.js";
+import { sendEmail } from "../services/mailer.js";
+import { env } from "../config/env.js";
 
 export const campaignRouter = Router();
 
@@ -182,12 +184,95 @@ async function resolveRecipients(input: {
   });
 }
 
+function makeUid(campaignId: string, contactId: string) {
+  return Buffer.from(`${campaignId}:${contactId}`).toString("base64url");
+}
+
+function rewriteLinksForTracking(html: string, uid: string) {
+  return html.replace(/href="(https?:\/\/[^"]+)"/gi, (_m, url: string) => {
+    if (url.startsWith(`${env.PUBLIC_API_URL}/unsubscribe`)) {
+      return `href="${url}"`;
+    }
+    const tracked = `${env.PUBLIC_API_URL}/track/click?uid=${encodeURIComponent(uid)}&url=${encodeURIComponent(url)}`;
+    return `href="${tracked}"`;
+  });
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function getCustomField(customFields: unknown, key: string) {
+  if (!customFields || typeof customFields !== "object" || Array.isArray(customFields)) return "";
+  const value = (customFields as Record<string, unknown>)[key];
+  return value == null ? "" : String(value);
+}
+
+function mergeTags(html: string, input: {
+  email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  customFields?: unknown;
+  unsubscribeUrl?: string;
+}) {
+  return html.replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_match, key: string) => {
+    if (key === "first_name") return escapeHtml(input.firstName ?? "");
+    if (key === "last_name") return escapeHtml(input.lastName ?? "");
+    if (key === "email") return escapeHtml(input.email);
+    if (key === "unsubscribe_link") {
+      if (!input.unsubscribeUrl) return "";
+      return `<a href="${input.unsubscribeUrl}" style="color:#155eef;text-decoration:underline;">Unsubscribe</a>`;
+    }
+    if (key.startsWith("custom.")) {
+      return escapeHtml(getCustomField(input.customFields, key.slice("custom.".length)));
+    }
+    return "";
+  });
+}
+
+function appendTrackingPixel(html: string, uid: string) {
+  const pixel = `<img src="${env.PUBLIC_API_URL}/track/open?uid=${encodeURIComponent(uid)}" alt="" width="1" height="1" style="display:none;" />`;
+  if (html.includes("</body>")) return html.replace("</body>", `${pixel}</body>`);
+  return `${html}${pixel}`;
+}
+
+function appendUnsubscribeFooter(html: string, uid: string) {
+  const url = `${env.PUBLIC_API_URL}/unsubscribe?uid=${encodeURIComponent(uid)}`;
+  const footer = `<div style="margin-top:24px;font-family:Arial,sans-serif;font-size:12px;color:#666;">
+<p style="margin:0 0 8px;">If you no longer wish to receive these emails, you can <a href="${url}">unsubscribe here</a>.</p>
+</div>`;
+
+  if (html.includes("</body>")) return html.replace("</body>", `${footer}</body>`);
+  return `${html}${footer}`;
+}
+
+async function markCampaignSentIfComplete(campaignId: string) {
+  const remainingQueued = await prisma.campaignSend.count({
+    where: {
+      campaignId,
+      status: "QUEUED"
+    }
+  });
+
+  if (remainingQueued === 0) {
+    await prisma.campaign.update({
+      where: { id: campaignId },
+      data: { status: CampaignStatus.SENT }
+    });
+  }
+}
+
 async function queueCampaignSend(input: {
   campaignId: string;
   orgId: string;
   listIds: string[];
   segmentId?: string | null;
   excludeListIds: string[];
+  immediate?: boolean;
 }) {
   const campaign = await prisma.campaign.findFirst({
     where: { id: input.campaignId, orgId: input.orgId },
@@ -236,17 +321,74 @@ async function queueCampaignSend(input: {
       }
     });
 
-    await enqueueSendJob({
-      type: "SEND_CAMPAIGN",
-      campaignId: campaign.id,
-      campaignSendId: sendRow.id,
-      contactId: recipient.id,
-      to: recipient.email,
-      subject: campaign.subject,
-      html: campaign.template.html,
-      fromEmail: campaign.fromEmail,
-      replyToEmail: campaign.replyToEmail
-    });
+    if (input.immediate) {
+      // Send immediately
+      const uid = makeUid(campaign.id, recipient.id);
+      const unsubscribeUrl = `${env.PUBLIC_API_URL}/unsubscribe?uid=${encodeURIComponent(uid)}`;
+      const contact = await prisma.contact.findUnique({
+        where: { id: recipient.id },
+        select: {
+          email: true,
+          firstName: true,
+          lastName: true,
+          customFields: true
+        }
+      });
+      let finalHtml = campaign.template.html;
+      finalHtml = mergeTags(finalHtml, {
+        email: contact?.email ?? recipient.email,
+        firstName: contact?.firstName ?? null,
+        lastName: contact?.lastName ?? null,
+        customFields: contact?.customFields ?? {},
+        unsubscribeUrl
+      });
+      finalHtml = rewriteLinksForTracking(finalHtml, uid);
+      finalHtml = appendTrackingPixel(finalHtml, uid);
+      finalHtml = appendUnsubscribeFooter(finalHtml, uid);
+
+      const sent = await sendEmail({
+        to: recipient.email,
+        subject: campaign.subject,
+        html: finalHtml,
+        from: campaign.fromEmail,
+        replyTo: campaign.replyToEmail ?? undefined,
+        unsubscribeUrl
+      });
+
+      await prisma.campaignSend.update({
+        where: { id: sendRow.id },
+        data: {
+          status: "SENT",
+          sentAt: new Date(),
+          sesMessageId: sent.messageId
+        }
+      });
+
+      await prisma.emailEvent.create({
+        data: {
+          campaignId: campaign.id,
+          contactId: recipient.id,
+          eventType: "SENT"
+        }
+      });
+    } else {
+      // Enqueue
+      await enqueueSendJob({
+        type: "SEND_CAMPAIGN",
+        campaignId: campaign.id,
+        campaignSendId: sendRow.id,
+        contactId: recipient.id,
+        to: recipient.email,
+        subject: campaign.subject,
+        html: campaign.template.html,
+        fromEmail: campaign.fromEmail,
+        replyToEmail: campaign.replyToEmail
+      });
+    }
+  }
+
+  if (input.immediate) {
+    await markCampaignSentIfComplete(campaign.id);
   }
 
   return {
@@ -576,7 +718,8 @@ campaignRouter.post("/:id/send-now", writeAccess, async (req, res) => {
       orgId: req.user!.orgId,
       listIds: parsed.data.listIds,
       segmentId: parsed.data.segmentId,
-      excludeListIds: parsed.data.excludeListIds
+      excludeListIds: parsed.data.excludeListIds,
+      immediate: true
     });
 
     return res.status(result.status).json(result.body);
